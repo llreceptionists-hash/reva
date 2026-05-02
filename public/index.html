@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reva — AI Roofing Receptionist</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/images/reva-logo.png" alt="Reva" style="width:140px;margin-bottom:4px;" onerror="this.style.display='none';document.getElementById('reva-text-logo').style.display='block'">
+      <h1 id="reva-text-logo" style="display:none">Reva</h1>
+      <p>AI Receptionist</p>
+    </div>
+    <nav id="nav"></nav>
+    <div style="padding:16px;border-top:1px solid #374151;font-size:11px;color:#6b7280">
+      <div id="status-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:6px"></div>
+      Live
+      <span id="last-refresh" style="display:block;margin-top:4px"></span>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+    <div class="loading"><span class="spinner"></span> Loading Reva…</div>
+  </main>
+</div>
+
+<script src="/js/dashboard.js"></script>
+<script>
+  // Stamp last refresh time
+  setInterval(() => {
+    const el = document.getElementById('last-refresh');
+    if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString();
+  }, 1000);
+</script>
+
+</body>
+</html>

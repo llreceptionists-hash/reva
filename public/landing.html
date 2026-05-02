@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reva — AI Receptionist for Roofing Companies</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0f1e;
+      color: #fff;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 60px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: rgba(10,15,30,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      z-index: 100;
+    }
+    .nav-logo { font-size: 22px; font-weight: 700; color: #fff; }
+    .nav-logo span { color: #3b82f6; }
+    .nav-cta {
+      background: #3b82f6;
+      color: #fff;
+      padding: 10px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: #2563eb; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.4);
+      color: #93c5fd;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      max-width: 800px;
+    }
+    .hero h1 span { color: #3b82f6; }
+    .hero p {
+      font-size: clamp(16px, 2vw, 20px);
+      color: #94a3b8;
+      max-width: 560px;
+      margin-bottom: 40px;
+    }
+    .hero-ctas { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .btn-primary {
+      background: #3b82f6;
+      color: #fff;
+      padding: 16px 36px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.35);
+    }
+    .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 16px 36px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+    /* SOCIAL PROOF */
+    .social-proof {
+      text-align: center;
+      padding: 20px 24px 60px;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .social-proof strong { color: #94a3b8; }
+
+    /* HOW IT WORKS */
+    section { padding: 80px 24px; max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      text-align: center;
+      color: #3b82f6;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h2 {
+      text-align: center;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      text-align: center;
+      color: #64748b;
+      font-size: 17px;
+      max-width: 540px;
+      margin: 0 auto 60px;
+    }
+
+    /* STEPS */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+    .step {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+    }
+    .step-num {
+      width: 40px; height: 40px;
+      background: #3b82f6;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px;
+      margin-bottom: 20px;
+    }
+    .step h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .step p { color: #64748b; font-size: 15px; }
+
+    /* FEATURES */
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+    .feature {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 28px;
+      transition: border-color 0.2s;
+    }
+    .feature:hover { border-color: rgba(59,130,246,0.4); }
+    .feature-icon { font-size: 28px; margin-bottom: 16px; }
+    .feature h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+    .feature p { color: #64748b; font-size: 14px; }
+
+    /* SMS DEMO */
+    .demo-section {
+      background: rgba(255,255,255,0.03);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .demo-inner { max-width: 1100px; margin: 0 auto; padding: 80px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    @media (max-width: 768px) { .demo-inner { grid-template-columns: 1fr; } }
+    .demo-text h2 { text-align: left; }
+    .demo-text p { color: #64748b; font-size: 16px; margin-top: 16px; }
+    .demo-text ul { margin-top: 24px; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .demo-text li { display: flex; align-items: center; gap: 10px; color: #94a3b8; font-size: 15px; }
+    .demo-text li::before { content: '✓'; color: #10b981; font-weight: 700; font-size: 16px; }
+    .sms-mockup {
+      background: #1a1f2e;
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      max-width: 340px;
+      margin: 0 auto;
+    }
+    .sms-header {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .sms-header strong { display: block; color: #fff; font-size: 16px; margin-bottom: 2px; }
+    .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; margin-bottom: 8px; line-height: 1.4; }
+    .bubble.in { background: #3b82f6; color: #fff; border-bottom-right-radius: 4px; margin-left: auto; }
+    .bubble.out { background: #1e293b; color: #e2e8f0; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
+
+    /* PRICING */
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
+    .pricing-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 36px;
+      text-align: center;
+    }
+    .pricing-card.featured {
+      border-color: #3b82f6;
+      background: rgba(59,130,246,0.08);
+      position: relative;
+    }
+    .featured-badge {
+      position: absolute;
+      top: -12px; left: 50%; transform: translateX(-50%);
+      background: #3b82f6;
+      color: #fff;
+      padding: 4px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pricing-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .pricing-card .price { font-size: 48px; font-weight: 800; margin: 16px 0 4px; }
+    .pricing-card .price span { font-size: 18px; font-weight: 400; color: #64748b; }
+    .pricing-card .desc { color: #64748b; font-size: 14px; margin-bottom: 28px; }
+    .pricing-card ul { list-style: none; text-align: left; margin-bottom: 32px; display: flex; flex-direction: column; gap: 10px; }
+    .pricing-card li { display: flex; align-items: flex-start; gap: 10px; color: #94a3b8; font-size: 14px; }
+    .pricing-card li::before { content: '✓'; color: #10b981; font-weight: 700; flex-shrink: 0; }
+    .pricing-btn {
+      display: block;
+      background: #3b82f6;
+      color: #fff;
+      padding: 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      transition: background 0.2s;
+    }
+    .pricing-btn:hover { background: #2563eb; }
+    .pricing-btn.outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .pricing-btn.outline:hover { background: rgba(255,255,255,0.08); }
+
+    /* CTA BANNER */
+    .cta-banner {
+      background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2));
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 24px;
+      padding: 60px 40px;
+      text-align: center;
+      margin: 0 24px 80px;
+      max-width: 1052px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta-banner h2 { font-size: clamp(26px, 4vw, 42px); margin-bottom: 16px; }
+    .cta-banner p { color: #94a3b8; font-size: 17px; margin-bottom: 36px; }
+
+    /* CONTACT FORM */
+    .contact-section { background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.06); }
+    .contact-inner { max-width: 560px; margin: 0 auto; padding: 80px 24px; text-align: center; }
+    .contact-inner h2 { margin-bottom: 12px; }
+    .contact-inner p { color: #64748b; margin-bottom: 36px; }
+    form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+    input, select, textarea {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #3b82f6; }
+    select option { background: #1a1f2e; }
+    textarea { resize: vertical; min-height: 100px; }
+    .form-btn {
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .form-btn:hover { background: #2563eb; }
+    #form-success { display: none; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; padding: 16px; border-radius: 10px; text-align: center; }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 32px 24px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: #374151;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Re<span>va</span></div>
+  <a href="#contact" class="nav-cta">Get Started →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🤖 AI-Powered Receptionist</div>
+  <h1>Never Miss a Roofing Lead <span>Again</span></h1>
+  <p>Reva instantly texts back every missed call, qualifies leads 24/7, and books appointments — so your team only talks to ready-to-buy customers.</p>
+  <div class="hero-ctas">
+    <a href="#contact" class="btn-primary">Get Reva for My Company</a>
+    <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+  </div>
+</section>
+
+<div class="social-proof">
+  <strong>Set up in under 24 hours.</strong> No tech skills required. Works on any phone number.
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-label">How It Works</div>
+  <h2>Reva handles leads while you're on the roof</h2>
+  <p class="section-sub">From missed call to booked appointment — fully automated.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>Customer calls or texts</h3>
+      <p>Someone needs a new roof or has a leak. They call your business number or send a text.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>Reva responds instantly</h3>
+      <p>Within seconds, Reva texts back and starts a natural conversation — day or night, 24/7.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>Lead gets qualified</h3>
+      <p>Reva asks the right questions: address, issue type, urgency, timeline, and budget.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h3>Appointment booked</h3>
+      <p>Reva books the estimate and sends a confirmation. You get an alert with all the details.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SMS DEMO -->
+<div class="demo-section">
+  <div class="demo-inner">
+    <div class="demo-text">
+      <h2>Feels like a real person. Works like a machine.</h2>
+      <p>Reva has natural conversations over SMS — customers don't even realize they're talking to AI.</p>
+      <ul>
+        <li>Responds in under 5 seconds</li>
+        <li>Remembers the full conversation</li>
+        <li>Sends follow-ups if they go quiet</li>
+        <li>Alerts you the moment a lead is hot</li>
+        <li>Works while you sleep</li>
+      </ul>
+    </div>
+    <div class="sms-mockup">
+      <div class="sms-header">
+        <strong>Van City Roofing</strong>
+        Text Message
+      </div>
+      <div class="bubble in">Hi I think my roof is leaking</div>
+      <div class="bubble out">Hi! 👋 Welcome to Van City Roofing! I'm Reva, your roofing assistant. I'd love to help get that sorted out! What's your name?</div>
+      <div class="bubble in">Mike</div>
+      <div class="bubble out">Nice to meet you Mike! What's the address of the property?</div>
+      <div class="bubble in">123 Main St, Burnaby</div>
+      <div class="bubble out">Got it! How urgent is the leak — is water actively coming in right now?</div>
+      <div class="bubble in">Yes its pretty bad</div>
+      <div class="bubble out">Understood Mike — we'll prioritize you! 🚨 Our team can come Thursday morning. Does that work?</div>
+      <div class="bubble in">Perfect yes</div>
+      <div class="bubble out">✅ Booked! Thursday morning at your place. We'll send a reminder the night before. See you then!</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section>
+  <div class="section-label">Features</div>
+  <h2>Everything your front desk does — automated</h2>
+  <p class="section-sub">Reva handles the whole intake process so your team can focus on the work.</p>
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">📱</div>
+      <h3>Instant SMS Text-Back</h3>
+      <p>Every missed call gets an instant text within seconds. No lead falls through the cracks.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <h3>AI Lead Qualification</h3>
+      <p>Reva asks the right questions and scores leads automatically — you only talk to serious buyers.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📅</div>
+      <h3>Appointment Booking</h3>
+      <p>Reva books estimates directly over text and sends confirmation messages automatically.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔔</div>
+      <h3>Real-Time Alerts</h3>
+      <p>Get a text alert the moment a hot lead is qualified — name, issue, urgency, all included.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🔄</div>
+      <h3>Automated Follow-Ups</h3>
+      <p>If a lead goes quiet, Reva follows up at 2 hours, 2 days, and 7 days automatically.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <h3>Lead Dashboard</h3>
+      <p>See every lead, conversation, and pipeline stage in one clean dashboard — anytime.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📞</div>
+      <h3>Live Voice Answering</h3>
+      <p>Reva answers live calls, has a full conversation, and sends a summary text after.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🕐</div>
+      <h3>24/7 Coverage</h3>
+      <p>Nights, weekends, holidays — Reva never sleeps. Your business is always open.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <h3>Set Up in 24 Hours</h3>
+      <p>We handle the full setup. You give us your number and company name — we do the rest.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-label">Pricing</div>
+  <h2>Simple, flat monthly pricing</h2>
+  <p class="section-sub">No setup fees. No contracts. Cancel anytime.</p>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <h3>Starter</h3>
+      <div class="price">$297<span>/mo</span></div>
+      <div class="desc">Perfect for small roofing crews</div>
+      <ul>
+        <li>SMS text-back on missed calls</li>
+        <li>AI lead qualification</li>
+        <li>Automated follow-up sequences</li>
+        <li>Lead dashboard</li>
+        <li>Up to 200 leads/month</li>
+        <li>Email support</li>
+      </ul>
+      <a href="#contact" class="pricing-btn outline">Get Started</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="featured-badge">Most Popular</div>
+      <h3>Pro</h3>
+      <div class="price">$497<span>/mo</span></div>
+      <div class="desc">For growing roofing companies</div>
+      <ul>
+        <li>Everything in Starter</li>
+        <li>Live voice AI answering</li>
+        <li>Appointment booking & confirmations</li>
+        <li>Real-time owner alerts</li>
+        <li>Unlimited leads</li>
+        <li>Priority support</li>
+      </ul>
+      <a href="#contact" class="pricing-btn">Get Started</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<div class="cta-banner">
+  <h2>Ready to stop missing leads?</h2>
+  <p>Most roofing companies miss 30-40% of their inbound calls. Reva fixes that — starting today.</p>
+  <a href="#contact" class="btn-primary">Book a Free Demo →</a>
+</div>
+
+<!-- CONTACT FORM -->
+<div class="contact-section" id="contact">
+  <div class="contact-inner">
+    <h2>Get Started</h2>
+    <p>Fill out the form and we'll have Reva set up for your company within 24 hours.</p>
+    <form id="contact-form">
+      <input type="text" placeholder="Your Name" required>
+      <input type="text" placeholder="Company Name" required>
+      <input type="tel" placeholder="Your Phone Number" required>
+      <input type="email" placeholder="Email Address" required>
+      <select>
+        <option value="" disabled selected>How many leads/month do you get?</option>
+        <option>Less than 20</option>
+        <option>20–50</option>
+        <option>50–100</option>
+        <option>100+</option>
+      </select>
+      <textarea placeholder="Anything else you'd like us to know? (optional)"></textarea>
+      <button type="submit" class="form-btn">Book My Free Demo →</button>
+    </form>
+    <div id="form-success">🎉 Got it! We'll reach out within a few hours to get you set up.</div>
+  </div>
+</div>
+
+<footer>
+  © 2026 Reva AI · Built for roofing companies that want to grow
+</footer>
+
+<script>
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Form submit
+  document.getElementById('contact-form').addEventListener('submit', e => {
+    e.preventDefault();
+    e.target.style.display = 'none';
+    document.getElementById('form-success').style.display = 'block';
+  });
+</script>
+
+</body>
+</html>
