@@ -53,7 +53,7 @@ function showView(view) {
   const main = document.getElementById('main-content');
   main.innerHTML = '<div class="loading"><span class="spinner"></span> Loading…</div>';
 
-  if (view === 'leads')     loadLeads();
+  if (view === 'leads')     { filterStage = ''; filterPriority = ''; loadLeads(); }
   if (view === 'pipeline')  loadPipeline();
   if (view === 'followups') loadFollowUps();
   if (view === 'clients')   loadClients();
