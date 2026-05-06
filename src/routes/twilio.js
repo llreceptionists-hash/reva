@@ -81,6 +81,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
         speechTimeout: 'auto',
         timeout: '10',
         language: 'en-US',
+        hints: 'Burnaby, Vancouver, Surrey, Richmond, Coquitlam, Langley, Abbotsford, Maple Ridge, Port Moody, North Vancouver, West Vancouver, Delta, White Rock, Chilliwack, Kelowna, Kamloops, Victoria, leak, shingles, gutters, flashing, skylight, flat roof, inspection, storm damage, replacement',
       });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
@@ -92,7 +93,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
     if (gatherAction) {
       resp.say({ voice }, text);
-      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto', timeout: '10' });
+      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto', timeout: '10', hints: 'Burnaby, Vancouver, Surrey, Richmond, Coquitlam, Langley, Abbotsford, Maple Ridge, Port Moody, North Vancouver, West Vancouver, Delta, White Rock, Chilliwack, Kelowna, Kamloops, Victoria, leak, shingles, gutters, flashing, skylight, flat roof, inspection, storm damage, replacement' });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
       resp.say({ voice }, text);
