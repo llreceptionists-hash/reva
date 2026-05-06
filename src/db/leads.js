@@ -147,6 +147,8 @@ const clients = {
   },
 
   create(data) {
+    const existing = this.findByPhone(data.phone_number);
+    if (existing) throw new Error(`A client with number ${data.phone_number} already exists.`);
     db.run(
       `INSERT INTO clients (phone_number, company_name, owner_phone, booking_url, forward_phone, voice)
        VALUES (?, ?, ?, ?, ?, ?)`,
