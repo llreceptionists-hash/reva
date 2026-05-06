@@ -143,7 +143,7 @@ router.post('/sms/inbound', async (req, res) => {
 
     if (isUrgent && lead.urgency !== 'emergency') {
       leadsDb.update(phone, { urgency: 'emergency', priority: 'high' });
-      await alertOwner(`EMERGENCY lead from ${phone}. Message: "${body.slice(0, 100)}"`, revaClient);
+      await alertOwner(`🚨 EMERGENCY LEAD!\n📞 Phone: ${phone}\n💬 Message: "${body.slice(0, 100)}"`, revaClient);
     }
 
     const { text, metadata, stage } = await handleSmsConversation(phone, body, revaClient);
@@ -152,9 +152,17 @@ router.post('/sms/inbound', async (req, res) => {
     conversations.add(phone, 'sms', 'outbound', text, lead.id);
 
     if (metadata?.next_action === 'book_appointment' || stage === 'closing') {
-      const refreshed = leadsDb.findByPhone(phone);
+      const r = leadsDb.findByPhone(phone);
       await alertOwner(
-        `New QUALIFIED lead: ${refreshed.name || phone} | Issue: ${refreshed.issue_type || 'unknown'} | Urgency: ${refreshed.urgency || 'unknown'}`,
+        `🏠 NEW LEAD — Call them back!\n` +
+        `👤 Name: ${r.name || 'Unknown'}\n` +
+        `📞 Phone: ${phone}\n` +
+        `📍 Address: ${r.address || r.city || 'Not given'}\n` +
+        `🔧 Issue: ${r.issue_type || 'Not specified'}\n` +
+        `⚡ Urgency: ${r.urgency || 'Normal'}\n` +
+        `🏡 Property: ${r.property_type || 'Unknown'}\n` +
+        `📅 Appt: ${r.preferred_appointment || 'Not set'}\n` +
+        `💬 Source: Text message`,
         revaClient
       );
     }
@@ -295,6 +303,23 @@ router.post('/voice/respond', async (req, res) => {
     }
     // Extract and save lead data from the full conversation
     await extractVoiceLeadData(phone, history).catch(() => {});
+
+    // Send detailed alert to owner after voice call
+    const r = leadsDb.findByPhone(phone);
+    if (r) {
+      await alertOwner(
+        `📞 NEW CALL LEAD — Call them back!\n` +
+        `👤 Name: ${r.name || 'Unknown'}\n` +
+        `📞 Phone: ${phone}\n` +
+        `📍 Address: ${r.address || r.city || 'Not given'}\n` +
+        `🔧 Issue: ${r.issue_type || 'Not specified'}\n` +
+        `⚡ Urgency: ${r.urgency || 'Normal'}\n` +
+        `🏡 Property: ${r.property_type || 'Unknown'}\n` +
+        `📅 Appt: ${r.preferred_appointment || 'Not set'}\n` +
+        `💬 Source: Phone call`,
+        revaClient
+      ).catch(() => {});
+    }
     const closingTwiml = await buildElevenLabsTwiml(text, null, null, revaClient);
     return res.type('text/xml').send(closingTwiml);
   }
