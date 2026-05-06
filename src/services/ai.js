@@ -105,8 +105,8 @@ async function generateVoiceResponse(conversationHistory, userSpeech, revaClient
 
   try {
     const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 200,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 150,
       system: getVoiceSystemPrompt(revaClient),
       messages,
     });
