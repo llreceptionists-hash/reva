@@ -15,9 +15,13 @@ const {
   buildForwardTwiml,
 } = require('../services/voice');
 const { getMissedCallText, getFollowUpMessages } = require('../prompts/system');
+const { textToSpeech } = require('../services/elevenlabs');
 
 // In-memory voice session store
 const voiceSessions = new Map();
+
+// In-memory audio cache (sessionId → Buffer)
+const audioCache = new Map();
 
 // ---------------------------------------------------------------------------
 // Twilio signature validation (production only)
@@ -36,6 +40,67 @@ function validateTwilio(req, res, next) {
 
 router.use(express.urlencoded({ extended: false }));
 router.use(validateTwilio);
+
+// ---------------------------------------------------------------------------
+// AUDIO SERVING  →  GET /twilio/voice/audio/:id
+// Serves ElevenLabs generated audio to Twilio <Play>
+// ---------------------------------------------------------------------------
+router.get('/voice/audio/:id', (req, res) => {
+  const audio = audioCache.get(req.params.id);
+  if (!audio) return res.status(404).send('Not found');
+  res.set('Content-Type', 'audio/mpeg');
+  res.set('Content-Length', audio.length);
+  res.send(audio);
+  // Clean up after serving
+  setTimeout(() => audioCache.delete(req.params.id), 30000);
+});
+
+// ---------------------------------------------------------------------------
+// Helper: generate ElevenLabs audio and return TwiML <Play> URL
+// Falls back to <Say> if ElevenLabs fails
+// ---------------------------------------------------------------------------
+async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaClient) {
+  const twilio = require('twilio');
+  const { VoiceResponse } = twilio.twiml;
+  const BASE_URL = process.env.BASE_URL || 'https://yourdomain.com';
+  const resp = new VoiceResponse();
+
+  try {
+    const voiceId = revaClient?.voice_id || process.env.ELEVENLABS_VOICE_ID || 'kdmDKE6EkgrWrrykO9Qt';
+    const audio = await textToSpeech(text, voiceId);
+    const audioId = randomUUID();
+    audioCache.set(audioId, audio);
+
+    if (gatherAction) {
+      const gather = resp.gather({
+        input: 'speech',
+        action: gatherAction,
+        method: 'POST',
+        speechTimeout: 'auto',
+        language: 'en-US',
+      });
+      gather.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
+      if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
+    } else {
+      resp.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
+      resp.hangup();
+    }
+  } catch (err) {
+    console.error('[ElevenLabs] TTS failed, falling back to Polly:', err.message);
+    // Fallback to Polly
+    const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
+    if (gatherAction) {
+      const gather = resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto' });
+      gather.say({ voice }, text);
+      if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
+    } else {
+      resp.say({ voice }, text);
+      resp.hangup();
+    }
+  }
+
+  return resp.toString();
+}
 
 // ---------------------------------------------------------------------------
 // Helper: resolve which client a request is for based on the To number
@@ -161,7 +226,15 @@ router.post('/voice/inbound', async (req, res) => {
 
   voiceSessions.set(sessionId, { phone, history: [], turn: 0, revaClient });
 
-  res.type('text/xml').send(buildGreetTwiml(sessionId, revaClient));
+  const BASE_URL = process.env.BASE_URL || 'https://yourdomain.com';
+  const greetText = `Hey, thanks for calling ${revaClient.company_name}! This is Reva. What can I help you with today?`;
+  const twiml = await buildElevenLabsTwiml(
+    greetText,
+    `${BASE_URL}/twilio/voice/respond?session=${sessionId}`,
+    `${BASE_URL}/twilio/voice/respond?session=${sessionId}&fallback=1`,
+    revaClient
+  );
+  res.type('text/xml').send(twiml);
 });
 
 // ---------------------------------------------------------------------------
@@ -182,11 +255,15 @@ router.post('/voice/respond', async (req, res) => {
   const { phone, history, revaClient } = session;
   const turnCount = parseInt(req.query.turn || '0', 10);
 
+  const BASE_URL = process.env.BASE_URL || 'https://yourdomain.com';
+
   if (isFallback && turnCount > 1) {
     voiceSessions.delete(sessionId);
-    return res.type('text/xml').send(buildClosingTwiml(
-      `Thanks for calling! We'll follow up by text shortly. Have a great day!`, revaClient
-    ));
+    const byeTwiml = await buildElevenLabsTwiml(
+      `Thanks for calling! We'll follow up by text shortly.`,
+      null, null, revaClient
+    );
+    return res.type('text/xml').send(byeTwiml);
   }
 
   if (speech) {
@@ -210,18 +287,20 @@ router.post('/voice/respond', async (req, res) => {
       const fullConvo = history.map(m => `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.content}`).join('\n');
       const apptMatch = fullConvo.match(/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}(?:am|pm|:\d{2})|\bmorning\b|\bafternoon\b|\beverning\b|\btomorrow\b|\bnext week\b)/gi);
       const apptDetails = lead.preferred_appointment || (apptMatch ? apptMatch.join(', ') : null);
-
       const name = lead.name ? ` ${lead.name}` : '';
       const issue = lead.issue_type ? `for your ${lead.issue_type}` : 'for your roofing needs';
       const apptLine = apptDetails ? `\n📅 Appointment: ${apptDetails}` : '';
-
       const followUpText = `Hi${name}! Thanks for calling ${revaClient.company_name}. Here's your summary:${apptLine}\n🏠 Service: ${issue}\n✅ Our team will reach out to lock in your appointment. Reply here anytime!`;
       await sendSms(phone, followUpText, revaClient.phone_number).catch(() => {});
     }
-    return res.type('text/xml').send(buildClosingTwiml(text, revaClient));
+    const closingTwiml = await buildElevenLabsTwiml(text, null, null, revaClient);
+    return res.type('text/xml').send(closingTwiml);
   }
 
-  res.type('text/xml').send(buildSpeakAndGatherTwiml(text, sessionId, turnCount, revaClient));
+  const nextAction = `${BASE_URL}/twilio/voice/respond?session=${sessionId}&turn=${turnCount + 1}`;
+  const nextFallback = `${BASE_URL}/twilio/voice/respond?session=${sessionId}&turn=${turnCount + 1}&fallback=1`;
+  const twiml = await buildElevenLabsTwiml(text, nextAction, nextFallback, revaClient);
+  res.type('text/xml').send(twiml);
 });
 
 // ---------------------------------------------------------------------------
