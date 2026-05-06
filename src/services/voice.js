@@ -9,6 +9,9 @@ function getVoice(revaClient) {
   return revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
 }
 
+// Friendlier greeting with more natural pacing
+
+
 function buildGreetTwiml(sessionId, revaClient = null) {
   const resp   = new VoiceResponse();
   const voice  = getVoice(revaClient);
@@ -22,8 +25,7 @@ function buildGreetTwiml(sessionId, revaClient = null) {
     language: 'en-US',
   });
   gather.say({ voice },
-    `Hi there! Thank you for calling ${company}. I'm Reva, your roofing assistant. ` +
-    `I'll help you schedule a free estimate. What can I help you with today?`
+    `Hey, thanks for calling ${company}! This is Reva. What can I help you with today?`
   );
   resp.redirect({ method: 'POST' }, `${BASE_URL}/twilio/voice/respond?session=${sessionId}&fallback=1`);
   return resp.toString();
