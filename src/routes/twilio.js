@@ -78,7 +78,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
         input: 'speech',
         action: gatherAction,
         method: 'POST',
-        speechTimeout: '3',
+        speechTimeout: 'auto',
         timeout: '10',
         language: 'en-US',
       });
@@ -92,7 +92,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
     if (gatherAction) {
       resp.say({ voice }, text);
-      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: '3', timeout: '10' });
+      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto', timeout: '10' });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
       resp.say({ voice }, text);
