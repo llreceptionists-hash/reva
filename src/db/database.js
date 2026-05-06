@@ -1,38 +1,18 @@
 'use strict';
 
-/**
- * SQLite wrapper using sql.js (pure WebAssembly — no native compilation needed).
- * We load the DB from disk at startup and flush to disk after every write.
- */
+const { Pool } = require('pg');
 
-const path = require('path');
-const fs   = require('fs');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway')
+    ? { rejectUnauthorized: false }
+    : false,
+});
 
-const DB_PATH  = path.join(__dirname, '../../data/reva.db');
-const DATA_DIR = path.dirname(DB_PATH);
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-
-let _db  = null;   // sql.js Database instance
-let _SQL = null;   // sql.js constructor
-
-// ── Initialise (called once at startup) ─────────────────────────────────────
 async function init() {
-  if (_db) return _db;
-  const initSqlJs = require('sql.js');
-  _SQL = await initSqlJs();
-
-  if (fs.existsSync(DB_PATH)) {
-    const buf = fs.readFileSync(DB_PATH);
-    _db = new _SQL.Database(buf);
-  } else {
-    _db = new _SQL.Database();
-  }
-
-  // Create schema
-  _db.run(`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS clients (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       phone_number TEXT NOT NULL UNIQUE,
       company_name TEXT NOT NULL,
       owner_phone TEXT,
@@ -40,10 +20,11 @@ async function init() {
       forward_phone TEXT,
       voice TEXT DEFAULT 'Polly.Joanna-Neural',
       active INTEGER DEFAULT 1,
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMP DEFAULT NOW()
     );
+
     CREATE TABLE IF NOT EXISTS leads (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       client_phone TEXT,
       phone TEXT NOT NULL UNIQUE,
       name TEXT, email TEXT, address TEXT, city TEXT,
@@ -53,78 +34,59 @@ async function init() {
       notes TEXT, stage TEXT DEFAULT 'new',
       priority TEXT DEFAULT 'normal', assigned_to TEXT,
       source TEXT DEFAULT 'inbound',
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      last_contact_at TEXT
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW(),
+      last_contact_at TIMESTAMP
     );
+
     CREATE TABLE IF NOT EXISTS conversations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       lead_id INTEGER, phone TEXT NOT NULL, channel TEXT NOT NULL,
       direction TEXT NOT NULL, message TEXT NOT NULL,
-      created_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMP DEFAULT NOW()
     );
+
     CREATE TABLE IF NOT EXISTS follow_ups (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       lead_id INTEGER, phone TEXT NOT NULL, message TEXT NOT NULL,
-      scheduled_at TEXT NOT NULL, sent_at TEXT,
+      scheduled_at TIMESTAMP NOT NULL, sent_at TIMESTAMP,
       status TEXT DEFAULT 'pending', trigger_type TEXT
     );
+
     CREATE TABLE IF NOT EXISTS ai_sessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       phone TEXT NOT NULL UNIQUE,
       messages TEXT NOT NULL DEFAULT '[]',
       stage TEXT DEFAULT 'greeting',
-      updated_at TEXT DEFAULT (datetime('now'))
+      updated_at TIMESTAMP DEFAULT NOW()
     );
   `);
 
-  // Migration: add client_phone to existing leads table if missing
-  try { _db.run(`ALTER TABLE leads ADD COLUMN client_phone TEXT`); } catch (_) {}
-
-  flush();
-  return _db;
+  console.log('[DB] PostgreSQL connected and schema ready');
 }
 
-/** Save DB to disk after every write. */
-function flush() {
-  if (!_db) return;
-  try {
-    const data = _db.export();
-    fs.writeFileSync(DB_PATH, Buffer.from(data));
-  } catch (e) {
-    console.error('[DB] Flush error:', e.message);
-  }
+async function run(sql, params = []) {
+  // Convert SQLite ? placeholders to PostgreSQL $1, $2, ...
+  let i = 0;
+  const pgSql = sql.replace(/\?/g, () => `$${++i}`);
+  await pool.query(pgSql, params);
 }
 
-// ── Low-level helpers ────────────────────────────────────────────────────────
-
-/** Run a write statement (INSERT / UPDATE / DELETE / CREATE). */
-function run(sql, params = []) {
-  if (!_db) throw new Error('DB not initialised — call await db.init() first');
-  _db.run(sql, params);
-  flush();
+async function all(sql, params = []) {
+  let i = 0;
+  const pgSql = sql.replace(/\?/g, () => `$${++i}`);
+  const result = await pool.query(pgSql, params);
+  return result.rows;
 }
 
-/** Return all matching rows as plain objects. */
-function all(sql, params = []) {
-  if (!_db) throw new Error('DB not initialised');
-  const stmt = _db.prepare(sql);
-  stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows;
+async function get(sql, params = []) {
+  const rows = await all(sql, params);
+  return rows[0];
 }
 
-/** Return first matching row or undefined. */
-function get(sql, params = []) {
-  return all(sql, params)[0];
-}
-
-/** Return a single scalar value from the first column of the first row. */
-function scalar(sql, params = []) {
-  const row = get(sql, params);
+async function scalar(sql, params = []) {
+  const row = await get(sql, params);
   return row ? Object.values(row)[0] : null;
 }
 
-module.exports = { init, run, all, get, scalar, flush };
+module.exports = { init, run, all, get, scalar };

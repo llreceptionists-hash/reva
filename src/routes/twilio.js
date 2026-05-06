@@ -43,7 +43,6 @@ router.use(validateTwilio);
 
 // ---------------------------------------------------------------------------
 // AUDIO SERVING  →  GET /twilio/voice/audio/:id
-// Serves ElevenLabs generated audio to Twilio <Play>
 // ---------------------------------------------------------------------------
 router.get('/voice/audio/:id', (req, res) => {
   const audio = audioCache.get(req.params.id);
@@ -51,19 +50,19 @@ router.get('/voice/audio/:id', (req, res) => {
   res.set('Content-Type', 'audio/mpeg');
   res.set('Content-Length', audio.length);
   res.send(audio);
-  // Clean up after serving
   setTimeout(() => audioCache.delete(req.params.id), 30000);
 });
 
 // ---------------------------------------------------------------------------
 // Helper: generate ElevenLabs audio and return TwiML <Play> URL
-// Falls back to <Say> if ElevenLabs fails
 // ---------------------------------------------------------------------------
 async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaClient) {
   const twilio = require('twilio');
   const { VoiceResponse } = twilio.twiml;
   const BASE_URL = process.env.BASE_URL || 'https://yourdomain.com';
   const resp = new VoiceResponse();
+
+  const HINTS = 'Burnaby, Vancouver, Surrey, Richmond, Coquitlam, Langley, Abbotsford, Maple Ridge, Port Moody, North Vancouver, West Vancouver, Delta, White Rock, Chilliwack, Kelowna, Kamloops, Victoria, leak, shingles, gutters, flashing, skylight, flat roof, inspection, storm damage, replacement';
 
   try {
     const voiceId = revaClient?.voice_id || process.env.ELEVENLABS_VOICE_ID || 'kdmDKE6EkgrWrrykO9Qt';
@@ -72,7 +71,6 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     audioCache.set(audioId, audio);
 
     if (gatherAction) {
-      // Play audio FIRST, then gather — prevents Reva's voice from triggering speech detection
       resp.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
       resp.gather({
         input: 'speech',
@@ -81,7 +79,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
         speechTimeout: 'auto',
         timeout: '10',
         language: 'en-US',
-        hints: 'Burnaby, Vancouver, Surrey, Richmond, Coquitlam, Langley, Abbotsford, Maple Ridge, Port Moody, North Vancouver, West Vancouver, Delta, White Rock, Chilliwack, Kelowna, Kamloops, Victoria, leak, shingles, gutters, flashing, skylight, flat roof, inspection, storm damage, replacement',
+        hints: HINTS,
       });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
@@ -93,7 +91,7 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
     if (gatherAction) {
       resp.say({ voice }, text);
-      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto', timeout: '10', hints: 'Burnaby, Vancouver, Surrey, Richmond, Coquitlam, Langley, Abbotsford, Maple Ridge, Port Moody, North Vancouver, West Vancouver, Delta, White Rock, Chilliwack, Kelowna, Kamloops, Victoria, leak, shingles, gutters, flashing, skylight, flat roof, inspection, storm damage, replacement' });
+      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto', timeout: '10', hints: HINTS });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
       resp.say({ voice }, text);
@@ -107,10 +105,10 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
 // ---------------------------------------------------------------------------
 // Helper: resolve which client a request is for based on the To number
 // ---------------------------------------------------------------------------
-function resolveClient(req) {
+async function resolveClient(req) {
   const toNumber = req.body.To || req.body.Called;
   if (toNumber) {
-    const found = clients.findByPhone(toNumber);
+    const found = await clients.findByPhone(toNumber);
     if (found) return found;
   }
   return clients.getDefault();
@@ -120,9 +118,9 @@ function resolveClient(req) {
 // INBOUND SMS  →  POST /twilio/sms/inbound
 // ---------------------------------------------------------------------------
 router.post('/sms/inbound', async (req, res) => {
-  const phone  = req.body.From;
-  const body   = (req.body.Body || '').trim();
-  const revaClient = resolveClient(req);
+  const phone      = req.body.From;
+  const body       = (req.body.Body || '').trim();
+  const revaClient = await resolveClient(req);
 
   console.log(`[SMS:IN] ${phone} → ${revaClient.company_name}: ${body}`);
   res.status(200).send('');
@@ -131,30 +129,30 @@ router.post('/sms/inbound', async (req, res) => {
     const { isOptOut, isUrgent } = classifyMessage(body);
 
     if (isOptOut) {
-      followUps.cancelForPhone(phone);
-      aiSessions.clear(phone);
-      leadsDb.update(phone, { stage: 'lost', notes: 'Opted out via STOP' });
+      await followUps.cancelForPhone(phone);
+      await aiSessions.clear(phone);
+      await leadsDb.update(phone, { stage: 'lost', notes: 'Opted out via STOP' });
       return;
     }
 
-    let lead = leadsDb.findByPhone(phone);
-    if (!lead) lead = leadsDb.create(phone, 'inbound_text', revaClient.phone_number);
+    let lead = await leadsDb.findByPhone(phone);
+    if (!lead) lead = await leadsDb.create(phone, 'inbound_text', revaClient.phone_number);
 
-    followUps.cancelForPhone(phone);
-    conversations.add(phone, 'sms', 'inbound', body, lead.id);
+    await followUps.cancelForPhone(phone);
+    await conversations.add(phone, 'sms', 'inbound', body, lead.id);
 
     if (isUrgent && lead.urgency !== 'emergency') {
-      leadsDb.update(phone, { urgency: 'emergency', priority: 'high' });
+      await leadsDb.update(phone, { urgency: 'emergency', priority: 'high' });
       await alertOwner(`🚨 EMERGENCY LEAD!\n📞 Phone: ${phone}\n💬 Message: "${body.slice(0, 100)}"`, revaClient);
     }
 
     const { text, metadata, stage } = await handleSmsConversation(phone, body, revaClient);
 
     await sendSms(phone, text, revaClient.phone_number);
-    conversations.add(phone, 'sms', 'outbound', text, lead.id);
+    await conversations.add(phone, 'sms', 'outbound', text, lead.id);
 
     if (metadata?.next_action === 'book_appointment' || stage === 'closing') {
-      const r = leadsDb.findByPhone(phone);
+      const r = await leadsDb.findByPhone(phone);
       await alertOwner(
         `🏠 NEW LEAD — Call them back!\n` +
         `👤 Name: ${r.name || 'Unknown'}\n` +
@@ -169,12 +167,12 @@ router.post('/sms/inbound', async (req, res) => {
       );
     }
 
-    const refreshedLead = leadsDb.findByPhone(phone);
+    const refreshedLead = await leadsDb.findByPhone(phone);
     if (['new', 'contacted'].includes(refreshedLead.stage)) {
       const msgs = getFollowUpMessages(refreshedLead.name, revaClient);
       for (const fu of msgs) {
         const scheduledAt = new Date(Date.now() + fu.delay_hours * 3600 * 1000).toISOString();
-        followUps.schedule(phone, fu.message, scheduledAt, 'no_response', refreshedLead.id);
+        await followUps.schedule(phone, fu.message, scheduledAt, 'no_response', refreshedLead.id);
       }
     }
 
@@ -189,7 +187,7 @@ router.post('/sms/inbound', async (req, res) => {
 router.post('/voice/missed', async (req, res) => {
   const phone      = req.body.From || req.body.Called;
   const callStatus = req.body.CallStatus;
-  const revaClient = resolveClient(req);
+  const revaClient = await resolveClient(req);
 
   if (callStatus && !['no-answer', 'busy', 'failed'].includes(callStatus)) {
     console.log(`[MISSED] Ignoring status: ${callStatus} for ${phone}`);
@@ -200,20 +198,20 @@ router.post('/voice/missed', async (req, res) => {
   res.status(200).send('');
 
   try {
-    let lead = leadsDb.findByPhone(phone);
-    if (!lead) lead = leadsDb.create(phone, 'missed_call', revaClient.phone_number);
-    leadsDb.update(phone, { last_contact_at: new Date().toISOString() });
-    conversations.add(phone, 'voice', 'inbound', '[Missed call]', lead.id);
-    followUps.cancelForPhone(phone);
+    let lead = await leadsDb.findByPhone(phone);
+    if (!lead) lead = await leadsDb.create(phone, 'missed_call', revaClient.phone_number);
+    await leadsDb.update(phone, { last_contact_at: new Date().toISOString() });
+    await conversations.add(phone, 'voice', 'inbound', '[Missed call]', lead.id);
+    await followUps.cancelForPhone(phone);
 
     const missedMsg = getMissedCallText(revaClient);
     await sendSms(phone, missedMsg, revaClient.phone_number);
-    conversations.add(phone, 'sms', 'outbound', missedMsg, lead.id);
+    await conversations.add(phone, 'sms', 'outbound', missedMsg, lead.id);
 
     const msgs = getFollowUpMessages(lead.name, revaClient);
     for (const fu of msgs) {
       const scheduledAt = new Date(Date.now() + fu.delay_hours * 3600 * 1000).toISOString();
-      followUps.schedule(phone, fu.message, scheduledAt, 'missed_call', lead.id);
+      await followUps.schedule(phone, fu.message, scheduledAt, 'missed_call', lead.id);
     }
 
   } catch (err) {
@@ -226,13 +224,13 @@ router.post('/voice/missed', async (req, res) => {
 // ---------------------------------------------------------------------------
 router.post('/voice/inbound', async (req, res) => {
   const phone      = req.body.From;
-  const revaClient = resolveClient(req);
+  const revaClient = await resolveClient(req);
   const sessionId  = `${phone.replace(/\D/g,'')}_${randomUUID().slice(0,8)}`;
   console.log(`[CALL:IN] ${phone} → ${revaClient.company_name} | Session: ${sessionId}`);
 
-  let lead = leadsDb.findByPhone(phone);
-  if (!lead) lead = leadsDb.create(phone, 'inbound', revaClient.phone_number);
-  conversations.add(phone, 'voice', 'inbound', '[Inbound call answered]', lead.id);
+  let lead = await leadsDb.findByPhone(phone);
+  if (!lead) lead = await leadsDb.create(phone, 'inbound', revaClient.phone_number);
+  await conversations.add(phone, 'voice', 'inbound', '[Inbound call answered]', lead.id);
 
   voiceSessions.set(sessionId, { phone, history: [], turn: 0, revaClient });
 
@@ -264,7 +262,6 @@ router.post('/voice/respond', async (req, res) => {
 
   const { phone, history, revaClient } = session;
   const turnCount = parseInt(req.query.turn || '0', 10);
-
   const BASE_URL = process.env.BASE_URL || 'https://yourdomain.com';
 
   if (isFallback && turnCount > 1) {
@@ -277,7 +274,8 @@ router.post('/voice/respond', async (req, res) => {
   }
 
   if (speech) {
-    conversations.add(phone, 'voice', 'inbound', speech, leadsDb.findByPhone(phone)?.id);
+    const leadForConvo = await leadsDb.findByPhone(phone);
+    await conversations.add(phone, 'voice', 'inbound', speech, leadForConvo?.id);
     history.push({ role: 'user', content: speech });
   }
 
@@ -285,14 +283,15 @@ router.post('/voice/respond', async (req, res) => {
   history.push({ role: 'assistant', content: text });
   voiceSessions.set(sessionId, { ...session, history, turn: turnCount });
 
-  conversations.add(phone, 'voice', 'outbound', text, leadsDb.findByPhone(phone)?.id);
+  const leadForConvo2 = await leadsDb.findByPhone(phone);
+  await conversations.add(phone, 'voice', 'outbound', text, leadForConvo2?.id);
 
   const endPhrases = ['have a great day', 'goodbye', 'take care', 'bye'];
   const shouldEnd  = isDone || endPhrases.some(p => text.toLowerCase().includes(p));
 
   if (shouldEnd || turnCount >= 8) {
     voiceSessions.delete(sessionId);
-    const lead = leadsDb.findByPhone(phone);
+    const lead = await leadsDb.findByPhone(phone);
     if (lead) {
       const fullConvo = history.map(m => `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.content}`).join('\n');
       const apptMatch = fullConvo.match(/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}(?:am|pm|:\d{2})|\bmorning\b|\bafternoon\b|\beverning\b|\btomorrow\b|\bnext week\b)/gi);
@@ -306,11 +305,10 @@ router.post('/voice/respond', async (req, res) => {
       const followUpText = `Hi${name}! Here's your booking summary from ${revaClient.company_name}:\n\n${details}\n\n✅ Our team will call you to confirm. Reply here anytime!`;
       await sendSms(phone, followUpText, revaClient.phone_number).catch(() => {});
     }
-    // Extract and save lead data from the full conversation
+
     await extractVoiceLeadData(phone, history).catch(() => {});
 
-    // Send detailed alert to owner after voice call
-    const r = leadsDb.findByPhone(phone);
+    const r = await leadsDb.findByPhone(phone);
     if (r) {
       await alertOwner(
         `📞 NEW CALL LEAD — Call them back!\n` +
@@ -325,11 +323,12 @@ router.post('/voice/respond', async (req, res) => {
         revaClient
       ).catch(() => {});
     }
+
     const closingTwiml = await buildElevenLabsTwiml(text, null, null, revaClient);
     return res.type('text/xml').send(closingTwiml);
   }
 
-  const nextAction = `${BASE_URL}/twilio/voice/respond?session=${sessionId}&turn=${turnCount + 1}`;
+  const nextAction   = `${BASE_URL}/twilio/voice/respond?session=${sessionId}&turn=${turnCount + 1}`;
   const nextFallback = `${BASE_URL}/twilio/voice/respond?session=${sessionId}&turn=${turnCount + 1}&fallback=1`;
   const twiml = await buildElevenLabsTwiml(text, nextAction, nextFallback, revaClient);
   res.type('text/xml').send(twiml);
@@ -341,18 +340,18 @@ router.post('/voice/respond', async (req, res) => {
 router.post('/voice/voicemail', async (req, res) => {
   const phone        = req.body.From;
   const recordingUrl = req.body.RecordingUrl;
-  const revaClient   = resolveClient(req);
+  const revaClient   = await resolveClient(req);
   console.log(`[VOICEMAIL] ${phone} | URL: ${recordingUrl}`);
   res.status(200).send('');
 
   try {
-    let lead = leadsDb.findByPhone(phone);
-    if (!lead) lead = leadsDb.create(phone, 'missed_call', revaClient.phone_number);
-    conversations.add(phone, 'voice', 'inbound', `[Voicemail: ${recordingUrl}]`, lead.id);
+    let lead = await leadsDb.findByPhone(phone);
+    if (!lead) lead = await leadsDb.create(phone, 'missed_call', revaClient.phone_number);
+    await conversations.add(phone, 'voice', 'inbound', `[Voicemail: ${recordingUrl}]`, lead.id);
 
     const vmText = `Hi! We got your voicemail and will call you back shortly. In the meantime, text us here for faster service! 🏠`;
     await sendSms(phone, vmText, revaClient.phone_number);
-    conversations.add(phone, 'sms', 'outbound', vmText, lead.id);
+    await conversations.add(phone, 'sms', 'outbound', vmText, lead.id);
 
     await alertOwner(`New voicemail from ${phone}: ${recordingUrl}`, revaClient);
   } catch (err) {
@@ -363,14 +362,14 @@ router.post('/voice/voicemail', async (req, res) => {
 // ---------------------------------------------------------------------------
 // TRANSCRIPTION  →  POST /twilio/voice/transcription
 // ---------------------------------------------------------------------------
-router.post('/voice/transcription', (req, res) => {
+router.post('/voice/transcription', async (req, res) => {
   const phone = req.body.From;
   const text  = req.body.TranscriptionText;
   console.log(`[TRANSCRIPTION] ${phone}: ${text}`);
   res.status(200).send('');
   if (text) {
-    const lead = leadsDb.findByPhone(phone);
-    if (lead) conversations.add(phone, 'voice', 'inbound', `[Transcription] ${text}`, lead.id);
+    const lead = await leadsDb.findByPhone(phone);
+    if (lead) await conversations.add(phone, 'voice', 'inbound', `[Transcription] ${text}`, lead.id);
   }
 });
 

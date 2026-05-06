@@ -4,39 +4,39 @@ const db = require('./database');
 
 // ── Leads ────────────────────────────────────────────────────────────────────
 const leads = {
-  findByPhone(phone) {
+  async findByPhone(phone) {
     return db.get('SELECT * FROM leads WHERE phone = ?', [phone]);
   },
 
-  create(phone, source = 'inbound', clientPhone = null) {
-    db.run(`
+  async create(phone, source = 'inbound', clientPhone = null) {
+    await db.run(`
       INSERT INTO leads (phone, client_phone, source, stage, created_at, updated_at)
-      VALUES (?, ?, ?, 'new', datetime('now'), datetime('now'))
-      ON CONFLICT(phone) DO UPDATE SET updated_at = datetime('now')
+      VALUES (?, ?, ?, 'new', NOW(), NOW())
+      ON CONFLICT(phone) DO UPDATE SET updated_at = NOW()
     `, [phone, clientPhone, source]);
     return this.findByPhone(phone);
   },
 
-  update(phone, fields) {
+  async update(phone, fields) {
     const allowed = [
       'name','email','address','city','property_type','issue_type','urgency',
       'roof_size','has_other_quotes','timeline','budget_range','preferred_appointment',
       'notes','stage','priority','assigned_to','last_contact_at','client_phone'
     ];
-    const pairs  = Object.entries(fields).filter(([k]) => allowed.includes(k));
+    const pairs = Object.entries(fields).filter(([k]) => allowed.includes(k));
     if (!pairs.length) return this.findByPhone(phone);
     const setClauses = pairs.map(([k]) => `${k} = ?`).join(', ');
-    const values     = pairs.map(([, v]) => v);
-    db.run(
-      `UPDATE leads SET ${setClauses}, updated_at = datetime('now') WHERE phone = ?`,
+    const values = pairs.map(([, v]) => v);
+    await db.run(
+      `UPDATE leads SET ${setClauses}, updated_at = NOW() WHERE phone = ?`,
       [...values, phone]
     );
     return this.findByPhone(phone);
   },
 
-  list({ stage, priority, clientPhone, limit = 100, offset = 0 } = {}) {
+  async list({ stage, priority, clientPhone, limit = 100, offset = 0 } = {}) {
     const conditions = ['1=1'];
-    const params     = [];
+    const params = [];
     if (stage)       { conditions.push('stage = ?');        params.push(stage); }
     if (priority)    { conditions.push('priority = ?');     params.push(priority); }
     if (clientPhone) { conditions.push('client_phone = ?'); params.push(clientPhone); }
@@ -50,29 +50,29 @@ const leads = {
     `, params);
   },
 
-  stats(clientPhone = null) {
+  async stats(clientPhone = null) {
     const w = clientPhone ? `AND client_phone = '${clientPhone}'` : '';
     return {
-      total:           db.scalar(`SELECT COUNT(*) FROM leads WHERE 1=1 ${w}`) || 0,
-      new:             db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'new' ${w}`) || 0,
-      qualified:       db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'qualified' ${w}`) || 0,
-      appointment_set: db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'appointment_set' ${w}`) || 0,
-      won:             db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'won' ${w}`) || 0,
-      today:           db.scalar(`SELECT COUNT(*) FROM leads WHERE date(created_at) = date('now') ${w}`) || 0,
+      total:           (await db.scalar(`SELECT COUNT(*) FROM leads WHERE 1=1 ${w}`)) || 0,
+      new:             (await db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'new' ${w}`)) || 0,
+      qualified:       (await db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'qualified' ${w}`)) || 0,
+      appointment_set: (await db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'appointment_set' ${w}`)) || 0,
+      won:             (await db.scalar(`SELECT COUNT(*) FROM leads WHERE stage = 'won' ${w}`)) || 0,
+      today:           (await db.scalar(`SELECT COUNT(*) FROM leads WHERE date(created_at) = CURRENT_DATE ${w}`)) || 0,
     };
   }
 };
 
 // ── Conversations ─────────────────────────────────────────────────────────────
 const conversations = {
-  add(phone, channel, direction, message, leadId = null) {
-    db.run(
+  async add(phone, channel, direction, message, leadId = null) {
+    await db.run(
       'INSERT INTO conversations (lead_id, phone, channel, direction, message) VALUES (?,?,?,?,?)',
       [leadId, phone, channel, direction, message]
     );
   },
 
-  getForPhone(phone, limit = 50) {
+  async getForPhone(phone, limit = 50) {
     return db.all(
       'SELECT * FROM conversations WHERE phone = ? ORDER BY created_at ASC LIMIT ?',
       [phone, limit]
@@ -82,30 +82,30 @@ const conversations = {
 
 // ── Follow-ups ────────────────────────────────────────────────────────────────
 const followUps = {
-  schedule(phone, message, scheduledAt, triggerType, leadId = null) {
-    db.run(
+  async schedule(phone, message, scheduledAt, triggerType, leadId = null) {
+    await db.run(
       'INSERT INTO follow_ups (lead_id, phone, message, scheduled_at, trigger_type) VALUES (?,?,?,?,?)',
       [leadId, phone, message, scheduledAt, triggerType]
     );
   },
 
-  getPending() {
+  async getPending() {
     return db.all(`
       SELECT * FROM follow_ups
-      WHERE status = 'pending' AND scheduled_at <= datetime('now')
+      WHERE status = 'pending' AND scheduled_at <= NOW()
       ORDER BY scheduled_at ASC
     `);
   },
 
-  markSent(id) {
-    db.run(
-      "UPDATE follow_ups SET status = 'sent', sent_at = datetime('now') WHERE id = ?",
+  async markSent(id) {
+    await db.run(
+      "UPDATE follow_ups SET status = 'sent', sent_at = NOW() WHERE id = ?",
       [id]
     );
   },
 
-  cancelForPhone(phone) {
-    db.run(
+  async cancelForPhone(phone) {
+    await db.run(
       "UPDATE follow_ups SET status = 'cancelled' WHERE phone = ? AND status = 'pending'",
       [phone]
     );
@@ -114,42 +114,42 @@ const followUps = {
 
 // ── AI Sessions ───────────────────────────────────────────────────────────────
 const aiSessions = {
-  get(phone) {
-    const row = db.get('SELECT * FROM ai_sessions WHERE phone = ?', [phone]);
+  async get(phone) {
+    const row = await db.get('SELECT * FROM ai_sessions WHERE phone = ?', [phone]);
     if (!row) return null;
     return { ...row, messages: JSON.parse(row.messages) };
   },
 
-  upsert(phone, messages, stage) {
-    db.run(`
+  async upsert(phone, messages, stage) {
+    await db.run(`
       INSERT INTO ai_sessions (phone, messages, stage, updated_at)
-      VALUES (?, ?, ?, datetime('now'))
+      VALUES (?, ?, ?, NOW())
       ON CONFLICT(phone) DO UPDATE SET
-        messages = excluded.messages,
-        stage = excluded.stage,
-        updated_at = datetime('now')
+        messages = EXCLUDED.messages,
+        stage = EXCLUDED.stage,
+        updated_at = NOW()
     `, [phone, JSON.stringify(messages), stage]);
   },
 
-  clear(phone) {
-    db.run('DELETE FROM ai_sessions WHERE phone = ?', [phone]);
+  async clear(phone) {
+    await db.run('DELETE FROM ai_sessions WHERE phone = ?', [phone]);
   }
 };
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 const clients = {
-  findByPhone(phoneNumber) {
+  async findByPhone(phoneNumber) {
     return db.get('SELECT * FROM clients WHERE phone_number = ?', [phoneNumber]);
   },
 
-  list() {
+  async list() {
     return db.all('SELECT * FROM clients ORDER BY created_at DESC');
   },
 
-  create(data) {
-    const existing = this.findByPhone(data.phone_number);
+  async create(data) {
+    const existing = await this.findByPhone(data.phone_number);
     if (existing) throw new Error(`A client with number ${data.phone_number} already exists.`);
-    db.run(
+    await db.run(
       `INSERT INTO clients (phone_number, company_name, owner_phone, booking_url, forward_phone, voice)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [data.phone_number, data.company_name, data.owner_phone || null,
@@ -159,21 +159,20 @@ const clients = {
     return this.findByPhone(data.phone_number);
   },
 
-  update(id, data) {
+  async update(id, data) {
     const allowed = ['company_name','owner_phone','booking_url','forward_phone','voice','active'];
     const pairs = Object.entries(data).filter(([k]) => allowed.includes(k));
     if (!pairs.length) return;
     const setClauses = pairs.map(([k]) => `${k} = ?`).join(', ');
     const values = pairs.map(([, v]) => v);
-    db.run(`UPDATE clients SET ${setClauses} WHERE id = ?`, [...values, id]);
+    await db.run(`UPDATE clients SET ${setClauses} WHERE id = ?`, [...values, id]);
     return db.get('SELECT * FROM clients WHERE id = ?', [id]);
   },
 
-  delete(id) {
-    db.run('DELETE FROM clients WHERE id = ?', [id]);
+  async delete(id) {
+    await db.run('DELETE FROM clients WHERE id = ?', [id]);
   },
 
-  // Fallback config from .env when no DB client is found
   getDefault() {
     return {
       phone_number:  process.env.TWILIO_PHONE_NUMBER || '',

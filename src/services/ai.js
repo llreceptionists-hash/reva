@@ -20,7 +20,7 @@ function parseRevaResponse(raw) {
   return { text, metadata };
 }
 
-function applyMetadataToLead(phone, metadata) {
+async function applyMetadataToLead(phone, metadata) {
   if (!metadata || !metadata.captured) return;
 
   const updates = {};
@@ -46,15 +46,15 @@ function applyMetadataToLead(phone, metadata) {
 
   updates.last_contact_at = new Date().toISOString();
 
-  if (Object.keys(updates).length) leadsDb.update(phone, updates);
+  if (Object.keys(updates).length) await leadsDb.update(phone, updates);
 }
 
 /**
  * Main SMS conversation handler.
  */
 async function handleSmsConversation(phone, inboundMessage, revaClient = null) {
-  let session = aiSessions.get(phone);
-  const lead  = leadsDb.findByPhone(phone);
+  let session = await aiSessions.get(phone);
+  const lead  = await leadsDb.findByPhone(phone);
 
   let messages     = session ? session.messages : [];
   let sessionStage = session ? session.stage    : 'greeting';
@@ -79,8 +79,8 @@ async function handleSmsConversation(phone, inboundMessage, revaClient = null) {
     if (metadata?.stage) sessionStage = metadata.stage;
 
     const trimmed = messages.slice(-20);
-    aiSessions.upsert(phone, trimmed, sessionStage);
-    applyMetadataToLead(phone, metadata);
+    await aiSessions.upsert(phone, trimmed, sessionStage);
+    await applyMetadataToLead(phone, metadata);
 
     return { text, metadata, stage: sessionStage };
 
@@ -188,7 +188,7 @@ For urgency use: emergency, high, normal, or low. For property_type use: residen
     else if (data.issue_type)         updates.stage    = 'qualified';
 
     if (Object.keys(updates).length) {
-      leadsDb.update(phone, updates);
+      await leadsDb.update(phone, updates);
       console.log(`[AI] Voice lead data extracted for ${phone}:`, updates);
     }
   } catch (err) {
