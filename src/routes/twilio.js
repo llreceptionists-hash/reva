@@ -76,7 +76,8 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
         input: 'speech',
         action: gatherAction,
         method: 'POST',
-        speechTimeout: 'auto',
+        speechTimeout: '3',
+        timeout: '10',
         language: 'en-US',
       });
       gather.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
@@ -87,10 +88,9 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     }
   } catch (err) {
     console.error('[ElevenLabs] TTS failed, falling back to Polly:', err.message);
-    // Fallback to Polly
     const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
     if (gatherAction) {
-      const gather = resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: 'auto' });
+      const gather = resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: '3', timeout: '10' });
       gather.say({ voice }, text);
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
