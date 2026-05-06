@@ -58,7 +58,8 @@ async function boot() {
 }
 
 boot().catch(err => {
-  console.error('Failed to start Reva:', err);
+  console.error('Failed to start Reva:', err.message);
+  console.error(err.stack);
   process.exit(1);
 });
 
