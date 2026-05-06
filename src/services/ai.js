@@ -65,8 +65,8 @@ async function handleSmsConversation(phone, inboundMessage, revaClient = null) {
 
   try {
     const response = await client.messages.create({
-      model: 'claude-opus-4-6',
-      max_tokens: 512,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 300,
       system: systemPrompt,
       messages,
     });
