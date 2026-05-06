@@ -135,4 +135,65 @@ function classifyMessage(text) {
   };
 }
 
-module.exports = { handleSmsConversation, generateVoiceResponse, classifyMessage };
+/**
+ * Extract lead info from a completed voice call conversation history.
+ * Runs once at end of call to populate the lead database fields.
+ */
+async function extractVoiceLeadData(phone, history) {
+  if (!history || history.length < 2) return;
+
+  const transcript = history.map(m =>
+    `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.content}`
+  ).join('\n');
+
+  try {
+    const response = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 400,
+      system: `Extract lead information from this roofing phone call transcript. Return ONLY a JSON object with these fields (use null if not mentioned):
+{
+  "name": null,
+  "address": null,
+  "city": null,
+  "property_type": null,
+  "issue_type": null,
+  "urgency": null,
+  "preferred_appointment": null,
+  "timeline": null,
+  "notes": null
+}
+For urgency use: emergency, high, normal, or low. For property_type use: residential or commercial. For issue_type be specific: leak, storm damage, full replacement, inspection, gutters, etc.`,
+      messages: [{ role: 'user', content: transcript }]
+    });
+
+    const raw = response.content.find(b => b.type === 'text')?.text ?? '';
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return;
+
+    const data = JSON.parse(jsonMatch[0]);
+    const updates = {};
+
+    if (data.name)                  updates.name                 = data.name;
+    if (data.address)               updates.address              = data.address;
+    if (data.city)                  updates.city                 = data.city;
+    if (data.property_type)         updates.property_type        = data.property_type;
+    if (data.issue_type)            updates.issue_type           = data.issue_type;
+    if (data.urgency)               updates.urgency              = data.urgency;
+    if (data.preferred_appointment) updates.preferred_appointment = data.preferred_appointment;
+    if (data.timeline)              updates.timeline             = data.timeline;
+    if (data.notes)                 updates.notes                = data.notes;
+
+    if (data.urgency === 'emergency') updates.priority = 'high';
+    if (data.preferred_appointment)   updates.stage    = 'appointment_set';
+    else if (data.issue_type)         updates.stage    = 'qualified';
+
+    if (Object.keys(updates).length) {
+      leadsDb.update(phone, updates);
+      console.log(`[AI] Voice lead data extracted for ${phone}:`, updates);
+    }
+  } catch (err) {
+    console.error('[AI] Voice lead extraction error:', err.message);
+  }
+}
+
+module.exports = { handleSmsConversation, generateVoiceResponse, classifyMessage, extractVoiceLeadData };

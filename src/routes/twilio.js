@@ -6,7 +6,7 @@ const twilio   = require('twilio');
 const { randomUUID } = require('crypto');
 
 const { leads: leadsDb, conversations, followUps, aiSessions, clients } = require('../db/leads');
-const { handleSmsConversation, generateVoiceResponse, classifyMessage } = require('../services/ai');
+const { handleSmsConversation, generateVoiceResponse, classifyMessage, extractVoiceLeadData } = require('../services/ai');
 const { sendSms, alertOwner } = require('../services/sms');
 const {
   buildGreetTwiml,
@@ -293,6 +293,8 @@ router.post('/voice/respond', async (req, res) => {
       const followUpText = `Hi${name}! Thanks for calling ${revaClient.company_name}. Here's your summary:${apptLine}\n🏠 Service: ${issue}\n✅ Our team will reach out to lock in your appointment. Reply here anytime!`;
       await sendSms(phone, followUpText, revaClient.phone_number).catch(() => {});
     }
+    // Extract and save lead data from the full conversation
+    await extractVoiceLeadData(phone, history).catch(() => {});
     const closingTwiml = await buildElevenLabsTwiml(text, null, null, revaClient);
     return res.type('text/xml').send(closingTwiml);
   }
