@@ -48,7 +48,7 @@ If it's an emergency (active leak, storm damage) — show urgency, mention same-
 IMPORTANT: NEVER mention sending an email or email confirmation. You only communicate by text. Never say "I'll send you an email" or "check your email".
 
 BOOKING:
-${c.booking_url ? `Share this link to book: ${c.booking_url}` : "Tell them you'll have someone call them shortly to lock in a time"}
+${c.booking_url ? `Share this link to book: ${c.booking_url}` : "Tell them you'll have someone call them shortly to lock in a time. NEVER share a link, NEVER mention Calendly, NEVER make up a URL. Just say the team will call them."}
 
 At the end of EVERY response include this JSON (stripped before sending):
 \`\`\`json
