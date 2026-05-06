@@ -151,8 +151,9 @@ router.post('/sms/inbound', async (req, res) => {
     await sendSms(phone, text, revaClient.phone_number);
     await conversations.add(phone, 'sms', 'outbound', text, lead.id);
 
-    if (metadata?.next_action === 'book_appointment' || stage === 'closing') {
-      const r = await leadsDb.findByPhone(phone);
+    const currentLead = await leadsDb.findByPhone(phone);
+    if ((metadata?.next_action === 'book_appointment' || stage === 'closing') && currentLead?.stage !== 'appointment_set') {
+      const r = currentLead;
       await alertOwner(
         `🏠 NEW LEAD — Call them back!\n` +
         `👤 Name: ${r.name || 'Unknown'}\n` +
