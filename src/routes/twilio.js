@@ -72,7 +72,9 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     audioCache.set(audioId, audio);
 
     if (gatherAction) {
-      const gather = resp.gather({
+      // Play audio FIRST, then gather — prevents Reva's voice from triggering speech detection
+      resp.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
+      resp.gather({
         input: 'speech',
         action: gatherAction,
         method: 'POST',
@@ -80,7 +82,6 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
         timeout: '10',
         language: 'en-US',
       });
-      gather.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
       resp.play(`${BASE_URL}/twilio/voice/audio/${audioId}`);
@@ -90,8 +91,8 @@ async function buildElevenLabsTwiml(text, gatherAction, fallbackRedirect, revaCl
     console.error('[ElevenLabs] TTS failed, falling back to Polly:', err.message);
     const voice = revaClient?.voice || process.env.TWILIO_VOICE || 'Polly.Joanna-Neural';
     if (gatherAction) {
-      const gather = resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: '3', timeout: '10' });
-      gather.say({ voice }, text);
+      resp.say({ voice }, text);
+      resp.gather({ input: 'speech', action: gatherAction, method: 'POST', speechTimeout: '3', timeout: '10' });
       if (fallbackRedirect) resp.redirect({ method: 'POST' }, fallbackRedirect);
     } else {
       resp.say({ voice }, text);
