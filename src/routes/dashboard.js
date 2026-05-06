@@ -116,31 +116,16 @@ router.delete('/clients/:id', async (req, res) => {
 router.post('/demo-request', async (req, res) => {
   const { name, company, phone, email, leads, notes } = req.body;
   try {
-    const nodemailer = require('nodemailer');
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
-      subject: `🚀 New Demo Request — ${company || 'Unknown Company'}`,
-      text:
-        `NEW DEMO REQUEST\n\n` +
-        `Name: ${name || 'Unknown'}\n` +
-        `Company: ${company || 'Unknown'}\n` +
-        `Phone: ${phone || 'Not given'}\n` +
-        `Email: ${email || 'Not given'}\n` +
-        `Leads/month: ${leads || 'Not specified'}\n` +
-        `Notes: ${notes || 'None'}`,
-    });
-
+    const { alertOwner } = require('../services/sms');
+    await alertOwner(
+      `🚀 NEW DEMO REQUEST!\n` +
+      `👤 Name: ${name || 'Unknown'}\n` +
+      `🏢 Company: ${company || 'Unknown'}\n` +
+      `📞 Phone: ${phone || 'Not given'}\n` +
+      `📧 Email: ${email || 'Not given'}\n` +
+      `📊 Leads/month: ${leads || 'Not specified'}\n` +
+      `💬 Notes: ${notes || 'None'}`
+    );
     res.json({ ok: true });
   } catch (err) {
     console.error('[DEMO] Error:', err.message);
