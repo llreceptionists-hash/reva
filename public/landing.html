@@ -537,9 +537,19 @@
   });
 
   // Form submit
-  document.getElementById('contact-form').addEventListener('submit', e => {
+  document.getElementById('contact-form').addEventListener('submit', async e => {
     e.preventDefault();
-    e.target.style.display = 'none';
+    const form = e.target;
+    const inputs = form.querySelectorAll('input, select, textarea');
+    const [name, company, phone, email, leads, notes] = [...inputs].map(i => i.value);
+    try {
+      await fetch('/api/demo-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, company, phone, email, leads, notes })
+      });
+    } catch (_) {}
+    form.style.display = 'none';
     document.getElementById('form-success').style.display = 'block';
   });
 </script>

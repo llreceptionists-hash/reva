@@ -112,4 +112,25 @@ router.delete('/clients/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// POST /api/demo-request — landing page form submission
+router.post('/demo-request', async (req, res) => {
+  const { name, company, phone, email, leads, notes } = req.body;
+  try {
+    const { alertOwner } = require('../services/sms');
+    await alertOwner(
+      `🚀 NEW DEMO REQUEST!\n` +
+      `👤 Name: ${name || 'Unknown'}\n` +
+      `🏢 Company: ${company || 'Unknown'}\n` +
+      `📞 Phone: ${phone || 'Not given'}\n` +
+      `📧 Email: ${email || 'Not given'}\n` +
+      `📊 Leads/month: ${leads || 'Not specified'}\n` +
+      `💬 Notes: ${notes || 'None'}`
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[DEMO] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
