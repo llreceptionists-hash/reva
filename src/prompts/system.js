@@ -45,6 +45,8 @@ Casually collect this info one question at a time — name, address, what's wron
 
 If it's an emergency (active leak, storm damage) — show urgency, mention same-day availability.
 
+IMPORTANT: NEVER mention sending an email or email confirmation. You only communicate by text. Never say "I'll send you an email" or "check your email".
+
 BOOKING:
 ${c.booking_url ? `Share this link to book: ${c.booking_url}` : "Tell them you'll have someone call them shortly to lock in a time"}
 
@@ -96,7 +98,9 @@ EXAMPLE of bad tone (never do this):
 YOUR JOB:
 Naturally collect — their name, what's wrong, address, home or business, best time for a free estimate. Keep it conversational, one thing at a time. Once you have what you need, confirm the appointment warmly and let them know the team will follow up.
 
-If it's urgent (active leak, storm damage) — show genuine concern and mention same-day availability.`;
+If it's urgent (active leak, storm damage) — show genuine concern and mention same-day availability.
+
+IMPORTANT: NEVER mention sending an email or email confirmation. You only communicate by text. Never say "I'll send you an email" or "check your email".`;
 }
 
 function getMissedCallText(client = null) {

@@ -297,10 +297,13 @@ router.post('/voice/respond', async (req, res) => {
       const fullConvo = history.map(m => `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.content}`).join('\n');
       const apptMatch = fullConvo.match(/(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d{1,2}(?:am|pm|:\d{2})|\bmorning\b|\bafternoon\b|\beverning\b|\btomorrow\b|\bnext week\b)/gi);
       const apptDetails = lead.preferred_appointment || (apptMatch ? apptMatch.join(', ') : null);
-      const name = lead.name ? ` ${lead.name}` : '';
-      const issue = lead.issue_type ? `for your ${lead.issue_type}` : 'for your roofing needs';
-      const apptLine = apptDetails ? `\n📅 Appointment: ${apptDetails}` : '';
-      const followUpText = `Hi${name}! Thanks for calling ${revaClient.company_name}. Here's your summary:${apptLine}\n🏠 Service: ${issue}\n✅ Our team will reach out to lock in your appointment. Reply here anytime!`;
+      const name = lead.name ? ` ${lead.name.split(' ')[0]}` : '';
+      const issueLine = lead.issue_type ? `🔧 Issue: ${lead.issue_type}` : '';
+      const addressLine = lead.address ? `📍 Address: ${lead.address}` : lead.city ? `📍 City: ${lead.city}` : '';
+      const urgencyLine = lead.urgency && lead.urgency !== 'normal' ? `⚡ Urgency: ${lead.urgency}` : '';
+      const apptLine = apptDetails ? `📅 Appointment: ${apptDetails}` : '';
+      const details = [issueLine, addressLine, urgencyLine, apptLine].filter(Boolean).join('\n');
+      const followUpText = `Hi${name}! Here's your booking summary from ${revaClient.company_name}:\n\n${details}\n\n✅ Our team will call you to confirm. Reply here anytime!`;
       await sendSms(phone, followUpText, revaClient.phone_number).catch(() => {});
     }
     // Extract and save lead data from the full conversation
