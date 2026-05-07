@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Navigation ───────────────────────────────────────────────────────────────
 function renderNav() {
   const items = [
-    { id: 'leads',    icon: '👥', label: 'All Leads' },
+    { id: 'leads',    icon: '👥', label: 'All Leads', reset: true },
     { id: 'pipeline', icon: '📊', label: 'Pipeline' },
     { id: 'followups',icon: '📬', label: 'Follow-ups' },
     { id: 'clients',  icon: '🏢', label: 'Clients' },
   ];
   const nav = document.getElementById('nav');
   nav.innerHTML = items.map(i => `
-    <button class="nav-item ${currentView === i.id ? 'active' : ''}" onclick="showView('${i.id}')">
+    <button class="nav-item ${currentView === i.id ? 'active' : ''}" onclick="${i.reset ? "filterStage='';filterPriority='';" : ''}showView('${i.id}')">
       <span class="icon">${i.icon}</span> ${i.label}
     </button>
   `).join('');
@@ -53,7 +53,7 @@ function showView(view) {
   const main = document.getElementById('main-content');
   main.innerHTML = '<div class="loading"><span class="spinner"></span> Loading…</div>';
 
-  if (view === 'leads')     { filterStage = ''; filterPriority = ''; loadLeads(); }
+  if (view === 'leads')     loadLeads();
   if (view === 'pipeline')  loadPipeline();
   if (view === 'followups') loadFollowUps();
   if (view === 'clients')   loadClients();
