@@ -87,4 +87,4 @@ async function scalar(sql, params = []) {
   return row ? Object.values(row)[0] : null;
 }
 
-module.exports = { init, run, all, get, scalar };
+module.exports = { init, run, all, get, scalar, pool };

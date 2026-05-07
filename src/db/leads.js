@@ -37,17 +37,18 @@ const leads = {
   async list({ stage, priority, clientPhone, limit = 100, offset = 0 } = {}) {
     const conditions = ['1=1'];
     const params = [];
-    if (stage)       { conditions.push('stage = ?');        params.push(stage); }
-    if (priority)    { conditions.push('priority = ?');     params.push(priority); }
-    if (clientPhone) { conditions.push('client_phone = ?'); params.push(clientPhone); }
+    let i = 1;
+    if (stage)       { conditions.push(`stage = $${i++}`);        params.push(stage); }
+    if (priority)    { conditions.push(`priority = $${i++}`);     params.push(priority); }
+    if (clientPhone) { conditions.push(`client_phone = $${i++}`); params.push(clientPhone); }
     params.push(limit, offset);
-    return db.all(`
+    const { pool } = require('./database');
+    const result = await pool.query(`
       SELECT * FROM leads WHERE ${conditions.join(' AND ')}
-      ORDER BY
-        CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,
-        updated_at DESC
-      LIMIT ? OFFSET ?
+      ORDER BY updated_at DESC
+      LIMIT $${i} OFFSET $${i + 1}
     `, params);
+    return result.rows;
   },
 
   async stats(clientPhone = null) {
