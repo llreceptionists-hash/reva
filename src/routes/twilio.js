@@ -158,18 +158,24 @@ router.post('/sms/inbound', async (req, res) => {
     await sendSms(phone, text, revaClient.phone_number);
     await conversations.add(phone, 'sms', 'outbound', text, lead.id);
 
+    const prevAppt   = lead.preferred_appointment;
     const currentLead = await leadsDb.findByPhone(phone);
-    if ((metadata?.next_action === 'book_appointment' || stage === 'closing') && currentLead?.stage !== 'appointment_set') {
+    const newAppt    = currentLead?.preferred_appointment;
+    const apptUpdated = newAppt && newAppt !== prevAppt;
+    const isFirstBooking = (metadata?.next_action === 'book_appointment' || stage === 'closing') && currentLead?.stage !== 'appointment_set';
+
+    if (isFirstBooking || apptUpdated) {
       const r = currentLead;
+      const alertPrefix = apptUpdated && !isFirstBooking ? `📅 APPOINTMENT UPDATED` : `🏠 NEW LEAD — Call them back!`;
       await alertOwner(
-        `🏠 NEW LEAD — Call them back!\n` +
+        `${alertPrefix}\n` +
         `👤 Name: ${r.name || 'Unknown'}\n` +
         `📞 Phone: ${phone}\n` +
         `📍 Address: ${r.address || r.city || 'Not given'}\n` +
         `🔧 Issue: ${r.issue_type || 'Not specified'}\n` +
         `⚡ Urgency: ${r.urgency || 'Normal'}\n` +
         `🏡 Property: ${r.property_type || 'Unknown'}\n` +
-        `📅 Appt: ${r.preferred_appointment || 'Not set'}\n` +
+        `📅 Appt: ${newAppt || 'Not set'}\n` +
         `💬 Source: Text message`,
         revaClient
       );
