@@ -183,7 +183,7 @@ function createRealtimeBridge(twilioWs) {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
             '\n\nAs you learn information during the call, silently call update_lead() to save it. Never mention you are using any tools.',
-          voice:                     'alloy',
+          voice:                     'coral',
           input_audio_format:        'pcm16',
           output_audio_format:       'pcm16',
           input_audio_transcription: { model: 'whisper-1' },
