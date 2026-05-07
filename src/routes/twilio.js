@@ -247,17 +247,18 @@ router.post('/voice/inbound', async (req, res) => {
   if (!lead) lead = await leadsDb.create(phone, 'inbound', revaClient.phone_number);
   await leadsDb.update(phone, { last_contact_at: new Date().toISOString() });
 
-  // Build WebSocket URL — Railway terminates SSL so we use wss:// externally
-  const BASE_URL   = process.env.BASE_URL || 'https://yourdomain.com';
-  const wsHost     = BASE_URL.replace(/^https?:\/\//, '');
-  const streamUrl  = `wss://${wsHost}/twilio/voice/stream` +
-                     `?phone=${encodeURIComponent(phone)}` +
-                     `&client=${encodeURIComponent(revaClient.phone_number || '')}`;
+  // Build WebSocket URL — pass phone/client as <Parameter> elements (cleaner than query params)
+  const BASE_URL  = process.env.BASE_URL || 'https://yourdomain.com';
+  const wsHost    = BASE_URL.replace(/^https?:\/\//, '');
+  const streamUrl = `wss://${wsHost}/twilio/voice/stream`;
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
-    <Stream url="${streamUrl}" />
+    <Stream url="${streamUrl}">
+      <Parameter name="phone" value="${phone}"/>
+      <Parameter name="clientPhone" value="${revaClient.phone_number || ''}"/>
+    </Stream>
   </Connect>
 </Response>`;
 

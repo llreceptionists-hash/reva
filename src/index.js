@@ -28,7 +28,6 @@ async function boot() {
   const dashboardRoutes       = require('./routes/dashboard');
   const { startScheduler }    = require('./services/scheduler');
   const { createRealtimeBridge } = require('./services/realtime-voice');
-  const { clients }           = require('./db/leads');
 
   app.use('/twilio', twilioRoutes);
   app.use('/api',    dashboardRoutes);
@@ -40,27 +39,14 @@ async function boot() {
   // Attach directly to the HTTP server so Railway's proxy forwards upgrades
   const wss = new WebSocketServer({ server });
 
-  wss.on('connection', async (ws, req) => {
-    // Only handle Twilio media stream connections
+  wss.on('connection', (ws, req) => {
     if (!req.url.startsWith('/twilio/voice/stream')) {
       ws.close();
       return;
     }
-
-    const params      = new URLSearchParams(req.url.split('?')[1] || '');
-    const phone       = params.get('phone') || 'unknown';
-    const clientPhone = params.get('client') || '';
-
-    let revaClient;
-    try {
-      revaClient = clientPhone ? await clients.findByPhone(clientPhone) : null;
-      if (!revaClient) revaClient = clients.getDefault();
-    } catch {
-      revaClient = clients.getDefault();
-    }
-
-    console.log(`[WS] Stream connection: ${phone} → ${revaClient.company_name}`);
-    createRealtimeBridge(ws, phone, revaClient);
+    // phone/client resolved inside bridge from Twilio start event params
+    console.log('[WS] Twilio media stream connected');
+    createRealtimeBridge(ws);
   });
 
   // ── Start server ───────────────────────────────────────────────────────────
