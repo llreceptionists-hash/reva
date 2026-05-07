@@ -67,10 +67,10 @@ const conversations = {
     );
   },
 
-  async getForPhone(phone, limit = 200) {
+  async getForPhone(phone) {
     return db.all(
-      'SELECT * FROM conversations WHERE phone = ? ORDER BY created_at ASC LIMIT ?',
-      [phone, limit]
+      'SELECT * FROM conversations WHERE phone = ? ORDER BY created_at ASC',
+      [phone]
     );
   }
 };
