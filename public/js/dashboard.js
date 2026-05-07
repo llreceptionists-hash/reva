@@ -63,7 +63,7 @@ function showView(view) {
 async function loadLeads() {
   try {
     const [leads, stats] = await Promise.all([
-      api(`/leads?stage=${filterStage}&priority=${filterPriority}&limit=100`),
+      api(`/leads?limit=100`),
       api('/stats')
     ]);
     leadsCache = leads;
@@ -115,23 +115,6 @@ function renderLeadsView(leads, stats) {
     <div class="card">
       <div class="card-header">
         <span>All Leads (${leads.length})</span>
-        <div class="filters">
-          <select onchange="filterStage=this.value;loadLeads()">
-            <option value="">All Stages</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="qualified">Qualified</option>
-            <option value="appointment_set">Appt Set</option>
-            <option value="won">Won</option>
-            <option value="lost">Lost</option>
-          </select>
-          <select onchange="filterPriority=this.value;loadLeads()">
-            <option value="">All Priorities</option>
-            <option value="high">High</option>
-            <option value="normal">Normal</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
       </div>
       <table>
         <thead>
