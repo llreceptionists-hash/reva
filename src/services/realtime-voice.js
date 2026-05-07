@@ -12,7 +12,7 @@ const { leads: leadsDb, conversations, clients } = require('../db/leads');
 const { alertOwner, sendSms }                    = require('./sms');
 const { getVoiceSystemPrompt }                   = require('../prompts/system');
 
-const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
+const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview';
 
 // ── Audio conversion ─────────────────────────────────────────────────────────
 
