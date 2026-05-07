@@ -235,27 +235,31 @@ router.post('/voice/missed', async (req, res) => {
 
 // ---------------------------------------------------------------------------
 // INBOUND CALL  →  POST /twilio/voice/inbound
+// Uses GPT-4o Realtime via Twilio Media Streams for ~300ms latency
 // ---------------------------------------------------------------------------
 router.post('/voice/inbound', async (req, res) => {
   const phone      = req.body.From;
   const revaClient = await resolveClient(req);
-  const sessionId  = `${phone.replace(/\D/g,'')}_${randomUUID().slice(0,8)}`;
-  console.log(`[CALL:IN] ${phone} → ${revaClient.company_name} | Session: ${sessionId}`);
+  console.log(`[CALL:IN] ${phone} → ${revaClient.company_name}`);
 
   let lead = await leadsDb.findByPhone(phone);
   if (!lead) lead = await leadsDb.create(phone, 'inbound', revaClient.phone_number);
-  await conversations.add(phone, 'voice', 'inbound', '[Inbound call answered]', lead.id);
-
-  voiceSessions.set(sessionId, { phone, history: [], turn: 0, revaClient });
+  await leadsDb.update(phone, { last_contact_at: new Date().toISOString() });
 
   const BASE_URL  = process.env.BASE_URL || 'https://yourdomain.com';
-  const greetText = `Hey, thanks for calling ${revaClient.company_name}! This is Reva. What can I help you with today?`;
-  const twiml = await buildElevenLabsTwiml(
-    greetText,
-    `${BASE_URL}/twilio/voice/respond?session=${sessionId}`,
-    `${BASE_URL}/twilio/voice/respond?session=${sessionId}&fallback=1`,
-    revaClient
-  );
+  const wsHost    = BASE_URL.replace(/^https?:\/\//, '');
+  const streamUrl = `wss://${wsHost}/twilio/voice/stream`;
+
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="${streamUrl}">
+      <Parameter name="phone" value="${phone}"/>
+      <Parameter name="clientPhone" value="${revaClient.phone_number || ''}"/>
+    </Stream>
+  </Connect>
+</Response>`;
+
   res.type('text/xml').send(twiml);
 });
 
