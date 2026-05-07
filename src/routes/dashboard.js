@@ -8,6 +8,14 @@ const db = require('../db/database');
 
 router.use((req, res, next) => next());
 
+// GET /api/debug
+router.get('/debug', async (req, res) => {
+  const db = require('../db/database');
+  const count = await db.scalar('SELECT COUNT(*) FROM leads');
+  const rows = await db.all('SELECT id, phone, stage, updated_at FROM leads LIMIT 10');
+  res.json({ count, rows });
+});
+
 // GET /api/stats
 router.get('/stats', async (req, res) => {
   res.json(await leadsDb.stats());
