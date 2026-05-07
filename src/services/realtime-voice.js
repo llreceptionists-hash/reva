@@ -228,14 +228,7 @@ function createRealtimeBridge(twilioWs) {
             openAiReady = true;
             for (const payload of audioQueue) forwardToOpenAI(payload);
             audioQueue.length = 0;
-            openAiWs.send(JSON.stringify({
-              type: 'conversation.item.create',
-              item: {
-                type:    'message',
-                role:    'user',
-                content: [{ type: 'input_text', text: '(call just connected — greet the customer warmly)' }],
-              },
-            }));
+            // Just trigger a response directly — system prompt handles the greeting
             openAiWs.send(JSON.stringify({ type: 'response.create' }));
             break;
 
