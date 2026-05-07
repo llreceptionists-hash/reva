@@ -37,29 +37,30 @@ async function boot() {
   );
 
   // ── WebSocket server for Twilio Media Streams ─────────────────────────────
-  const wss = new WebSocketServer({ noServer: true });
+  // Attach directly to the HTTP server so Railway's proxy forwards upgrades
+  const wss = new WebSocketServer({ server });
 
-  server.on('upgrade', async (req, socket, head) => {
+  wss.on('connection', async (ws, req) => {
+    // Only handle Twilio media stream connections
     if (!req.url.startsWith('/twilio/voice/stream')) {
-      socket.destroy();
+      ws.close();
       return;
     }
-    wss.handleUpgrade(req, socket, head, async (ws) => {
-      const params      = new URLSearchParams(req.url.split('?')[1] || '');
-      const phone       = params.get('phone') || 'unknown';
-      const clientPhone = params.get('client') || '';
 
-      let revaClient;
-      try {
-        revaClient = clientPhone ? await clients.findByPhone(clientPhone) : null;
-        if (!revaClient) revaClient = clients.getDefault();
-      } catch {
-        revaClient = clients.getDefault();
-      }
+    const params      = new URLSearchParams(req.url.split('?')[1] || '');
+    const phone       = params.get('phone') || 'unknown';
+    const clientPhone = params.get('client') || '';
 
-      console.log(`[WS] Stream connection: ${phone} → ${revaClient.company_name}`);
-      createRealtimeBridge(ws, phone, revaClient);
-    });
+    let revaClient;
+    try {
+      revaClient = clientPhone ? await clients.findByPhone(clientPhone) : null;
+      if (!revaClient) revaClient = clients.getDefault();
+    } catch {
+      revaClient = clients.getDefault();
+    }
+
+    console.log(`[WS] Stream connection: ${phone} → ${revaClient.company_name}`);
+    createRealtimeBridge(ws, phone, revaClient);
   });
 
   // ── Start server ───────────────────────────────────────────────────────────
