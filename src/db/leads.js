@@ -35,20 +35,14 @@ const leads = {
   },
 
   async list({ stage, priority, clientPhone, limit = 100, offset = 0 } = {}) {
-    const conditions = ['1=1'];
+    let sql = 'SELECT * FROM leads WHERE 1=1';
     const params = [];
-    let i = 1;
-    if (stage)       { conditions.push(`stage = $${i++}`);        params.push(stage); }
-    if (priority)    { conditions.push(`priority = $${i++}`);     params.push(priority); }
-    if (clientPhone) { conditions.push(`client_phone = $${i++}`); params.push(clientPhone); }
+    if (stage)       { sql += ` AND stage = ?`;        params.push(stage); }
+    if (priority)    { sql += ` AND priority = ?`;     params.push(priority); }
+    if (clientPhone) { sql += ` AND client_phone = ?`; params.push(clientPhone); }
+    sql += ` ORDER BY updated_at DESC LIMIT ? OFFSET ?`;
     params.push(limit, offset);
-    const { pool } = require('./database');
-    const result = await pool.query(`
-      SELECT * FROM leads WHERE ${conditions.join(' AND ')}
-      ORDER BY updated_at DESC
-      LIMIT $${i} OFFSET $${i + 1}
-    `, params);
-    return result.rows;
+    return db.all(sql, params);
   },
 
   async stats(clientPhone = null) {
