@@ -119,7 +119,9 @@ async function resolveClient(req) {
 // ---------------------------------------------------------------------------
 router.post('/sms/inbound', async (req, res) => {
   const phone      = req.body.From;
-  const body       = (req.body.Body || '').trim();
+  const rawBody    = (req.body.Body || '').trim();
+  const hasPhoto   = req.body.NumMedia && parseInt(req.body.NumMedia) > 0;
+  const body       = hasPhoto && !rawBody ? '[Customer sent a photo of their roof]' : rawBody;
   const revaClient = await resolveClient(req);
 
   console.log(`[SMS:IN] ${phone} → ${revaClient.company_name}: ${body}`);
