@@ -62,11 +62,15 @@ function showView(view) {
 // ── Leads View ───────────────────────────────────────────────────────────────
 async function loadLeads() {
   try {
-    const [leads, stats] = await Promise.all([
+    const [leads, stats, clients] = await Promise.all([
       api(`/leads?limit=100`),
-      api('/stats')
+      api('/stats'),
+      api('/clients')
     ]);
     leadsCache = leads;
+    // Build a lookup map: client_phone → company_name
+    window.clientMap = {};
+    (clients || []).forEach(c => { window.clientMap[c.phone_number] = c.company_name; });
     renderLeadsView(leads, stats);
   } catch (e) {
     document.getElementById('main-content').innerHTML =
@@ -120,6 +124,7 @@ function renderLeadsView(leads, stats) {
         <thead>
           <tr>
             <th>Contact</th>
+            <th>Client</th>
             <th>Issue</th>
             <th>Urgency</th>
             <th>Stage</th>
@@ -129,7 +134,7 @@ function renderLeadsView(leads, stats) {
           </tr>
         </thead>
         <tbody>
-          ${leads.length ? leads.map(renderLeadRow).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No leads yet</td></tr>'}
+          ${leads.length ? leads.map(renderLeadRow).join('') : '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px">No leads yet</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -138,6 +143,7 @@ function renderLeadsView(leads, stats) {
 
 function renderLeadRow(lead) {
   const name = lead.name || lead.phone;
+  const company = (window.clientMap && window.clientMap[lead.client_phone]) || '—';
   const created = formatDate(lead.created_at);
   const lastContact = lead.last_contact_at ? formatDate(lead.last_contact_at) : '—';
   return `
@@ -146,6 +152,7 @@ function renderLeadRow(lead) {
         <strong>${escHtml(name)}</strong><br>
         <small style="color:var(--muted)">${lead.phone}</small>
       </td>
+      <td><small>${escHtml(company)}</small></td>
       <td>${escHtml(lead.issue_type || '—')}</td>
       <td>${lead.urgency ? `<span class="badge badge-${lead.urgency}">${label(lead.urgency)}</span>` : '—'}</td>
       <td><span class="badge badge-${lead.stage}">${label(lead.stage)}</span></td>
