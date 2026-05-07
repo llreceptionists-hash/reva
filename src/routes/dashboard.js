@@ -32,7 +32,7 @@ router.get('/leads/:phone', async (req, res) => {
   const lead = await leadsDb.findByPhone(req.params.phone);
   if (!lead) return res.status(404).json({ error: 'Not found' });
 
-  const history = await conversations.getForPhone(req.params.phone, 50);
+  const history = await conversations.getForPhone(req.params.phone, 200);
   res.json({ lead, history });
 });
 

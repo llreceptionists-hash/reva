@@ -67,7 +67,7 @@ const conversations = {
     );
   },
 
-  async getForPhone(phone, limit = 50) {
+  async getForPhone(phone, limit = 200) {
     return db.all(
       'SELECT * FROM conversations WHERE phone = ? ORDER BY created_at ASC LIMIT ?',
       [phone, limit]
