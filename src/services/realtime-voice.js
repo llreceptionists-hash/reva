@@ -250,8 +250,17 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'response.done':
-            // Mark greeting as done after first response completes
-            if (!greetingDone) greetingDone = true;
+            // Mark greeting as done only after audio has finished playing,
+            // not just when OpenAI finishes generating it — otherwise VAD
+            // can fire a 'clear' while Twilio is still playing the greeting.
+            if (!greetingDone) {
+              const pollGreeting = setInterval(() => {
+                if (Date.now() - lastAudioAt >= 600) {
+                  clearInterval(pollGreeting);
+                  greetingDone = true;
+                }
+              }, 100);
+            }
             break;
 
           case 'response.audio.delta':
