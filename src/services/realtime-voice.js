@@ -335,12 +335,44 @@ function createRealtimeBridge(twilioWs) {
 
   // ── Lead update tool call ───────────────────────────────────────────────────
 
+  // Common words the AI mistakenly saves as names
+  const NOT_A_NAME = new Set([
+    'house','home','roof','roofing','leak','repair','damage','storm','wind','rain',
+    'attic','ceiling','shingle','shingles','gutters','chimney','flat','pitched',
+    'residential','commercial','industrial','business','property','building',
+    'yes','no','ok','okay','sure','thanks','hello','hi','hey','there','just',
+    'about','actually','well','so','and','the','my','our','your','their',
+    'small','big','large','minor','major','urgent','emergency','bad','good',
+    'calling','looking','having','getting','need','want','trying',
+  ]);
+
   async function handleLeadUpdate(ev) {
     try {
       const args = JSON.parse(ev.arguments || '{}');
+      console.log(`[REALTIME] update_lead raw:`, args);
+
+      // Server-side validation — reject clearly wrong values before DB write
+      if (args.name) {
+        const first = args.name.trim().split(/\s+/)[0].toLowerCase();
+        if (NOT_A_NAME.has(first) || args.name.trim().length < 2) {
+          console.warn(`[REALTIME] Rejected bad name: "${args.name}"`);
+          delete args.name;
+        }
+      }
+
+      if (!Object.keys(args).length) {
+        // Nothing valid to save — still need to ack the tool call
+        openAiWs.send(JSON.stringify({
+          type: 'conversation.item.create',
+          item: { type: 'function_call_output', call_id: ev.call_id, output: '{"ok":true}' },
+        }));
+        openAiWs.send(JSON.stringify({ type: 'response.create' }));
+        return;
+      }
+
       const prev = await leadsDb.findByPhone(phone);
       await leadsDb.update(phone, args);
-      console.log(`[REALTIME] update_lead:`, args);
+      console.log(`[REALTIME] update_lead saved:`, args);
 
       openAiWs.send(JSON.stringify({
         type: 'conversation.item.create',
