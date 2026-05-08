@@ -79,6 +79,7 @@ function downsample24to8(buf) {
 
 function createRealtimeBridge(twilioWs) {
   let streamSid    = null;
+  let callSid      = null;
   let openAiWs     = null;
   let callEnded    = false;
   let openAiReady  = false;
@@ -98,6 +99,7 @@ function createRealtimeBridge(twilioWs) {
 
       case 'start': {
         streamSid = msg.start.streamSid;
+        callSid   = msg.start.callSid;
         const cp  = msg.start.customParameters || {};
         phone     = cp.phone || 'unknown';
         const clientPhone = cp.clientPhone || '';
@@ -258,6 +260,11 @@ function createRealtimeBridge(twilioWs) {
             if (ev.transcript) {
               transcript.push({ role: 'assistant', text: ev.transcript });
               console.log(`[REALTIME] AI: ${ev.transcript.slice(0, 80)}`);
+              // Hang up after goodbye — wait 2s for audio to finish playing
+              const closingPhrases = ['have a great day', 'goodbye', 'take care', 'bye', 'have a good one', 'talk soon', 'have a good day'];
+              if (closingPhrases.some(p => ev.transcript.toLowerCase().includes(p))) {
+                setTimeout(() => hangUp(), 2000);
+              }
             }
             break;
 
@@ -319,6 +326,20 @@ function createRealtimeBridge(twilioWs) {
         item: { type: 'function_call_output', call_id: ev.call_id, output: '{"ok":false}' },
       }));
       openAiWs.send(JSON.stringify({ type: 'response.create' }));
+    }
+  }
+
+  // ── Hang up ──────────────────────────────────────────────────────────────────
+
+  async function hangUp() {
+    if (!callSid || callEnded) return;
+    try {
+      const twilio = require('twilio');
+      const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+      await client.calls(callSid).update({ status: 'completed' });
+      console.log(`[REALTIME] Hung up call ${callSid}`);
+    } catch (err) {
+      console.error('[REALTIME] hangUp error:', err.message);
     }
   }
 
