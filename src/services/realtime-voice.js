@@ -260,10 +260,18 @@ function createRealtimeBridge(twilioWs) {
             if (ev.transcript) {
               transcript.push({ role: 'assistant', text: ev.transcript });
               console.log(`[REALTIME] AI: ${ev.transcript.slice(0, 80)}`);
-              // Hang up after goodbye — wait 2s for audio to finish playing
-              const closingPhrases = ['have a great day', 'goodbye', 'take care', 'bye', 'have a good one', 'talk soon', 'have a good day'];
-              if (closingPhrases.some(p => ev.transcript.toLowerCase().includes(p))) {
-                setTimeout(() => hangUp(), 2000);
+              // Hang up after a clear goodbye — only if it's a short closing message
+              // to avoid triggering mid-conversation on phrases like "take care of your roof"
+              const text  = ev.transcript.toLowerCase().trim();
+              const words = text.split(/\s+/);
+              const isShortMessage = words.length < 25;
+              const lastWords = words.slice(-6).join(' ');
+              const clearGoodbye = ['have a great day', 'have a good day', 'have a good one', 'talk soon', 'goodbye', 'take care now'];
+              const shortGoodbye = ['bye', 'take care'];
+              const isGoodbye = clearGoodbye.some(p => text.includes(p)) ||
+                                (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
+              if (isGoodbye) {
+                setTimeout(() => hangUp(), 2500);
               }
             }
             break;
