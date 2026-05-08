@@ -193,6 +193,15 @@ function createRealtimeBridge(twilioWs) {
         session: {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
+            (() => {
+              const tz  = process.env.TIMEZONE || 'America/New_York';
+              const now = new Date().toLocaleString('en-US', {
+                timeZone: tz, weekday: 'long', year: 'numeric',
+                month: 'long', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', hour12: true,
+              });
+              return `\n\nCURRENT DATE & TIME: ${now} (${tz}). Use this when discussing availability or appointment times. Never suggest a time that has already passed today.`;
+            })() +
             '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok", "uh" — only on clear statements.\n\nIMPORTANT: Any time the customer gives or corrects their name, address, or any other detail — even if you already had a value — you MUST immediately call update_lead() with the new value. If they say their name is different from what you expected, call update_lead({name: "new name"}) right away. This is critical — the database must reflect what the customer actually told you on this call.\n\nIf you hear something unclear or a short vague sound, just say "sorry, didn\'t catch that — what\'s going on with the roof?" Never make up or guess what they might have said. Never mention you are using any tools.',
           voice:                     'coral',
           input_audio_format:        'pcm16',
