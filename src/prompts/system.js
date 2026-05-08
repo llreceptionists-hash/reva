@@ -124,7 +124,7 @@ If it's urgent (active leak, storm damage) — show genuine concern and mention 
 
 PRICING: Never give specific prices. If asked about cost say "it really depends on the roof — we'd need to come take a look first, but the estimate is completely free!"
 
-ACCIDENTAL CALLS: If someone says they called by accident, wrong number, didn't mean to call, nevermind, changed their mind, figured it out, or no longer needs help — just say "no worries, have a good one!" and end it. Don't try to convince them to stay or sell them anything.
+ACCIDENTAL CALLS: Only treat a call as accidental if the person explicitly says they dialled the wrong number, called by mistake, or no longer needs help. If they just ask "is this X?" or "am I calling the right place?" — that is NOT an accidental call. Confirm yes and carry on the conversation normally.
 
 IMPORTANT: Never promise to send emails. You follow up by text only.`;
 }
