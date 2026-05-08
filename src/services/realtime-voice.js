@@ -7,10 +7,48 @@
  * inside the 'start' event — no query params needed on the WebSocket URL.
  */
 
-const WebSocket = require('ws');
+const WebSocket  = require('ws');
+const Anthropic  = require('@anthropic-ai/sdk');
 const { leads: leadsDb, conversations, clients } = require('../db/leads');
 const { alertOwner, sendSms }                    = require('./sms');
 const { getVoiceSystemPrompt }                   = require('../prompts/system');
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+// Extract structured lead data from transcript using Claude
+async function extractLeadFromTranscript(transcript) {
+  const text = transcript.map(m => `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.text}`).join('\n');
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5',
+      max_tokens: 300,
+      messages: [{
+        role: 'user',
+        content: `Extract lead info from this roofing call transcript. Return ONLY valid JSON, nothing else.
+
+Transcript:
+${text}
+
+Return this JSON (use null for anything not mentioned):
+{
+  "name": "customer full name or null",
+  "address": "full address or null",
+  "city": "city or null",
+  "issue_type": "exact words customer used to describe the problem or null",
+  "urgency": "emergency|urgent|normal|low or null",
+  "property_type": "residential|commercial or null",
+  "preferred_appointment": "day and time they agreed to or null"
+}`
+      }],
+    });
+    const raw = msg.content[0].text.trim();
+    const json = raw.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+    return JSON.parse(json);
+  } catch (err) {
+    console.error('[EXTRACT] Failed to extract lead data:', err.message);
+    return null;
+  }
+}
 
 const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview';
 
@@ -458,12 +496,25 @@ function createRealtimeBridge(twilioWs) {
       if (!lead) return;
 
       // Skip everything for very short calls where nothing was captured
-      // (e.g. someone called to check the number then hung up)
       const userMessages = transcript.filter(m => m.role === 'user');
-      const nothingCaptured = !lead.name && !lead.issue_type && !lead.address && !lead.city;
-      if (userMessages.length <= 1 && nothingCaptured) {
-        console.log(`[REALTIME] No info captured from ${phone} — skipping alert and SMS`);
+      if (userMessages.length <= 1) {
+        console.log(`[REALTIME] Very short call from ${phone} — skipping`);
         return;
+      }
+
+      // Extract structured data from transcript using Claude — more reliable
+      // than depending on the AI to call update_lead() during the call
+      const extracted = await extractLeadFromTranscript(transcript);
+      if (extracted) {
+        console.log(`[REALTIME] Extracted from transcript:`, extracted);
+        // Normalize property_type
+        if (extracted.property_type) {
+          const pt = extracted.property_type.toLowerCase();
+          if (!['residential','commercial'].includes(pt)) delete extracted.property_type;
+        }
+        // Filter out nulls before saving
+        const toSave = Object.fromEntries(Object.entries(extracted).filter(([, v]) => v !== null));
+        if (Object.keys(toSave).length) await leadsDb.update(phone, toSave);
       }
 
       for (const m of transcript) {
