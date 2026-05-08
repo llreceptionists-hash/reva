@@ -270,10 +270,13 @@ function createRealtimeBridge(twilioWs) {
               const text  = ev.transcript.toLowerCase().trim();
               const words = text.split(/\s+/);
               const isShortMessage = words.length < 25;
-              const lastWords = words.slice(-6).join(' ');
+              // Only check the tail of the message — prevents mid-convo confirmation
+              // phrases like "have a good one" from triggering early hangup
+              const lastWords  = words.slice(-6).join(' ');
+              const tailWords  = words.slice(-15).join(' ');
               const clearGoodbye = ['have a great day', 'have a good day', 'have a good one', 'talk soon', 'goodbye', 'take care now'];
               const shortGoodbye = ['bye', 'take care'];
-              const isGoodbye = clearGoodbye.some(p => text.includes(p)) ||
+              const isGoodbye = clearGoodbye.some(p => tailWords.includes(p)) ||
                                 (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
               if (isGoodbye && !hangupPending) {
                 hangupPending = true;
