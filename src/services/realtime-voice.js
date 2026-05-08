@@ -78,16 +78,18 @@ function downsample24to8(buf) {
 // ── Bridge ───────────────────────────────────────────────────────────────────
 
 function createRealtimeBridge(twilioWs) {
-  let streamSid    = null;
-  let callSid      = null;
-  let openAiWs     = null;
-  let callEnded    = false;
-  let openAiReady  = false;
-  let greetingDone = false; // prevent VAD interrupting the opening greeting
-  let phone        = 'unknown';
-  let revaClient   = null;
-  const transcript  = [];
-  const audioQueue  = []; // buffer while OpenAI is connecting
+  let streamSid      = null;
+  let callSid        = null;
+  let openAiWs       = null;
+  let callEnded      = false;
+  let openAiReady    = false;
+  let greetingDone   = false; // prevent VAD interrupting the opening greeting
+  let phone          = 'unknown';
+  let revaClient     = null;
+  let lastAudioAt    = 0;    // timestamp of last audio delta — used for hangup timing
+  let hangupPending  = false;
+  const transcript   = [];
+  const audioQueue   = []; // buffer while OpenAI is connecting
 
   // ── Twilio → us ────────────────────────────────────────────────────────────
 
@@ -253,7 +255,10 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'response.audio.delta':
-            if (ev.delta) sendToTwilio(ev.delta);
+            if (ev.delta) {
+              sendToTwilio(ev.delta);
+              lastAudioAt = Date.now();
+            }
             break;
 
           case 'response.audio_transcript.done':
@@ -270,8 +275,17 @@ function createRealtimeBridge(twilioWs) {
               const shortGoodbye = ['bye', 'take care'];
               const isGoodbye = clearGoodbye.some(p => text.includes(p)) ||
                                 (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
-              if (isGoodbye) {
-                setTimeout(() => hangUp(), 2500);
+              if (isGoodbye && !hangupPending) {
+                hangupPending = true;
+                // Wait until audio has been silent for 1s, then add 1s buffer
+                // This prevents cutting off mid-sentence if the message is long
+                const pollInterval = setInterval(() => {
+                  const silentMs = Date.now() - lastAudioAt;
+                  if (silentMs >= 1000) {
+                    clearInterval(pollInterval);
+                    setTimeout(() => hangUp(), 1000);
+                  }
+                }, 200);
               }
             }
             break;
@@ -381,6 +395,15 @@ function createRealtimeBridge(twilioWs) {
 
       const lead = await leadsDb.findByPhone(phone);
       if (!lead) return;
+
+      // Skip everything for very short calls where nothing was captured
+      // (e.g. someone called to check the number then hung up)
+      const userMessages = transcript.filter(m => m.role === 'user');
+      const nothingCaptured = !lead.name && !lead.issue_type && !lead.address && !lead.city;
+      if (userMessages.length <= 1 && nothingCaptured) {
+        console.log(`[REALTIME] No info captured from ${phone} — skipping alert and SMS`);
+        return;
+      }
 
       for (const m of transcript) {
         await conversations.add(
