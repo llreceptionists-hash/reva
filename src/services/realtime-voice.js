@@ -355,6 +355,16 @@ function createRealtimeBridge(twilioWs) {
   async function saveCallAndAlert() {
     if (!transcript.length) return;
     try {
+      // Skip everything if it was an accidental call
+      const accidentalPhrases = ['wrong number', 'accident', 'accidental', 'meant to call', 'wrong person', 'my bad', 'oops'];
+      const wasAccidental = transcript.some(m =>
+        m.role === 'user' && accidentalPhrases.some(p => m.text.toLowerCase().includes(p))
+      );
+      if (wasAccidental) {
+        console.log(`[REALTIME] Accidental call from ${phone} — skipping alert and SMS`);
+        return;
+      }
+
       const lead = await leadsDb.findByPhone(phone);
       if (!lead) return;
 
