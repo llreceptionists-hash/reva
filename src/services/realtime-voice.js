@@ -428,18 +428,43 @@ function createRealtimeBridge(twilioWs) {
       let r = await leadsDb.findByPhone(phone);
       if (!r) return;
 
-      // Safety net: if the AI confirmed a name in the transcript that differs
-      // from the DB (e.g. customer corrected their name but update_lead wasn't called),
-      // extract it from the confirmation line and update the DB now.
+      // Safety net: scan the transcript for the LAST thing the customer explicitly
+      // said their name/address was. If it differs from the DB, update it now.
+      // This catches cases where the AI acknowledged the correction verbally but
+      // didn't call update_lead().
+      const namePatterns = [
+        /(?:my name(?:'?s| is)|i'?m|call me|it'?s)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,3})/i,
+        /(?:actually|no,?\s+it'?s|no,?\s+i'?m)\s+([A-Za-z]+(?:\s+[A-Za-z]+){0,3})/i,
+      ];
+      const userMsgs = transcript.filter(m => m.role === 'user');
+      // Walk user messages in reverse to find the LAST name they gave
+      let scannedName = null;
+      for (const m of [...userMsgs].reverse()) {
+        for (const pat of namePatterns) {
+          const match = m.text.match(pat);
+          if (match) { scannedName = match[1].trim(); break; }
+        }
+        if (scannedName) break;
+      }
+      if (scannedName && r.name && scannedName.toLowerCase() !== r.name.toLowerCase()) {
+        console.log(`[REALTIME] Name mismatch — DB: "${r.name}", transcript: "${scannedName}". Updating.`);
+        await leadsDb.update(phone, { name: scannedName });
+        r = await leadsDb.findByPhone(phone);
+      }
+
+      // Also check AI's confirmation line as a secondary fallback
       const confirmLine = [...transcript].reverse().find(m =>
-        m.role === 'assistant' && /you'?re\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i.test(m.text)
+        m.role === 'assistant' && /you'?re\s+\w+/i.test(m.text)
       );
-      if (confirmLine) {
-        const match = confirmLine.text.match(/you'?re\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+      if (!scannedName && confirmLine) {
+        const match = confirmLine.text.match(/you'?re\s+([A-Za-z]+(?:\s+[A-Za-z]+){1,3})/i);
         if (match) {
           const confirmedName = match[1].trim();
-          if (r.name && confirmedName.toLowerCase() !== r.name.toLowerCase()) {
-            console.log(`[REALTIME] Name mismatch — DB: "${r.name}", confirmed: "${confirmedName}". Updating.`);
+          // Ignore generic words that aren't names
+          const notAName = ['calling', 'looking', 'saying', 'asking', 'the', 'all', 'set', 'good'];
+          if (!notAName.includes(confirmedName.split(' ')[0].toLowerCase()) &&
+              r.name && confirmedName.toLowerCase() !== r.name.toLowerCase()) {
+            console.log(`[REALTIME] Name from confirmation — DB: "${r.name}", confirmed: "${confirmedName}". Updating.`);
             await leadsDb.update(phone, { name: confirmedName });
             r = await leadsDb.findByPhone(phone);
           }
