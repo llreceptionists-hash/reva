@@ -250,16 +250,12 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'response.done':
-            // Mark greeting as done only after audio has finished playing,
-            // not just when OpenAI finishes generating it — otherwise VAD
-            // can fire a 'clear' while Twilio is still playing the greeting.
+            // Mark greeting as done after a fixed delay — OpenAI sends all
+            // audio deltas quickly (faster than real-time), so lastAudioAt
+            // goes stale while Twilio is still playing the greeting.
+            // 4s gives enough headroom for any intro length.
             if (!greetingDone) {
-              const pollGreeting = setInterval(() => {
-                if (Date.now() - lastAudioAt >= 600) {
-                  clearInterval(pollGreeting);
-                  greetingDone = true;
-                }
-              }, 100);
+              setTimeout(() => { greetingDone = true; }, 4000);
             }
             break;
 
@@ -289,13 +285,15 @@ function createRealtimeBridge(twilioWs) {
                                 (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
               if (isGoodbye && !hangupPending) {
                 hangupPending = true;
-                // Wait until audio has been silent for 1s, then add 1s buffer
-                // This prevents cutting off mid-sentence if the message is long
+                // Wait until OpenAI stops sending audio (1s silence on our end),
+                // then add 5s for Twilio to finish draining its audio buffer.
+                // OpenAI sends deltas faster than real-time so Twilio can have
+                // several seconds of audio queued up after we stop receiving deltas.
                 const pollInterval = setInterval(() => {
                   const silentMs = Date.now() - lastAudioAt;
                   if (silentMs >= 1000) {
                     clearInterval(pollInterval);
-                    setTimeout(() => hangUp(), 1000);
+                    setTimeout(() => hangUp(), 5000);
                   }
                 }, 200);
               }
