@@ -189,16 +189,16 @@ function createRealtimeBridge(twilioWs) {
         session: {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
-            '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok" — only on clear statements. Never mention you are using any tools.',
+            '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok", "uh" — only on clear statements.\n\nIf you hear something unclear or a short vague sound, just say "sorry, didn\'t catch that — what\'s going on with the roof?" Never make up or guess what they might have said. Never mention you are using any tools.',
           voice:                     'coral',
           input_audio_format:        'pcm16',
           output_audio_format:       'pcm16',
           input_audio_transcription: { model: 'whisper-1' },
           turn_detection: {
             type:                'server_vad',
-            threshold:           0.5,
-            prefix_padding_ms:   300,
-            silence_duration_ms: 600,
+            threshold:           0.8,
+            prefix_padding_ms:   500,
+            silence_duration_ms: 800,
           },
           tools: [{
             type:        'function',
