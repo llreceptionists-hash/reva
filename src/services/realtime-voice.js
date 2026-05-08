@@ -78,12 +78,13 @@ function downsample24to8(buf) {
 // ── Bridge ───────────────────────────────────────────────────────────────────
 
 function createRealtimeBridge(twilioWs) {
-  let streamSid  = null;
-  let openAiWs   = null;
-  let callEnded  = false;
-  let openAiReady = false;
-  let phone      = 'unknown';
-  let revaClient = null;
+  let streamSid    = null;
+  let openAiWs     = null;
+  let callEnded    = false;
+  let openAiReady  = false;
+  let greetingDone = false; // prevent VAD interrupting the opening greeting
+  let phone        = 'unknown';
+  let revaClient   = null;
   const transcript  = [];
   const audioQueue  = []; // buffer while OpenAI is connecting
 
@@ -188,7 +189,7 @@ function createRealtimeBridge(twilioWs) {
         session: {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
-            '\n\nAs you learn information during the call, silently call update_lead() to save it. Never mention you are using any tools.',
+            '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok" — only on clear statements. Never mention you are using any tools.',
           voice:                     'coral',
           input_audio_format:        'pcm16',
           output_audio_format:       'pcm16',
@@ -238,8 +239,15 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'input_audio_buffer.speech_started':
-            // User started talking — clear Twilio's audio buffer for natural interruptions
-            if (streamSid) twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
+            // Only allow interruptions after the greeting is fully done
+            if (greetingDone && streamSid) {
+              twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
+            }
+            break;
+
+          case 'response.done':
+            // Mark greeting as done after first response completes
+            if (!greetingDone) greetingDone = true;
             break;
 
           case 'response.audio.delta':
