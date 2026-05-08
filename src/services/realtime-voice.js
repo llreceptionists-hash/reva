@@ -65,7 +65,13 @@ function upsample8to24(buf) {
 function downsample24to8(buf) {
   const n   = Math.floor((buf.length >> 1) / 3);
   const out = Buffer.alloc(n * 2);
-  for (let i = 0; i < n; i++) out.writeInt16LE(buf.readInt16LE(i * 6), i * 2);
+  for (let i = 0; i < n; i++) {
+    // Average 3 samples instead of decimating — reduces aliasing/static
+    const s1 = buf.readInt16LE(i * 6);
+    const s2 = buf.readInt16LE(i * 6 + 2);
+    const s3 = buf.readInt16LE(i * 6 + 4);
+    out.writeInt16LE(Math.round((s1 + s2 + s3) / 3), i * 2);
+  }
   return out;
 }
 
