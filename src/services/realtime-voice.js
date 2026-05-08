@@ -356,7 +356,13 @@ function createRealtimeBridge(twilioWs) {
     if (!transcript.length) return;
     try {
       // Skip everything if it was an accidental call
-      const accidentalPhrases = ['wrong number', 'accident', 'accidental', 'meant to call', 'wrong person', 'my bad', 'oops'];
+      const accidentalPhrases = [
+        'wrong number', 'accident', 'accidental', 'meant to call', 'wrong person',
+        'my bad', 'oops', 'nevermind', 'never mind', 'forget it', 'changed my mind',
+        'not anymore', 'don\'t need', 'dont need', 'no longer', 'not interested',
+        'figured it out', 'all good now', 'sorted it out', 'never mind',
+        'was gonna call but', 'going to call but', 'thought i\'d call but',
+      ];
       const wasAccidental = transcript.some(m =>
         m.role === 'user' && accidentalPhrases.some(p => m.text.toLowerCase().includes(p))
       );
