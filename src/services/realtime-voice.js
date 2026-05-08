@@ -223,9 +223,9 @@ function createRealtimeBridge(twilioWs) {
                 name:                  { type: 'string' },
                 address:               { type: 'string' },
                 city:                  { type: 'string' },
-                issue_type:            { type: 'string' },
+                issue_type:            { type: 'string', description: 'The exact words the customer used to describe the problem. Do NOT summarize or categorize — save verbatim e.g. "hole in my roof", "shingles blowing off", "water coming through ceiling".' },
                 urgency:               { type: 'string', enum: ['emergency','urgent','normal','low'] },
-                property_type:         { type: 'string', enum: ['residential','commercial'] },
+                property_type:         { type: 'string', enum: ['residential','commercial'], description: 'residential = house, townhouse, condo, apartment. commercial = business, office, warehouse, store.' },
                 preferred_appointment: { type: 'string' },
                 stage:                 { type: 'string', enum: ['new','contacted','qualified','appointment_set'] },
                 priority:              { type: 'string', enum: ['high','normal','low'] },
@@ -358,6 +358,16 @@ function createRealtimeBridge(twilioWs) {
           console.warn(`[REALTIME] Rejected bad name: "${args.name}"`);
           delete args.name;
         }
+      }
+
+      // Normalize property_type — AI sometimes sends 'townhouse', 'condo' etc.
+      if (args.property_type) {
+        const pt = args.property_type.toLowerCase();
+        const residentialWords = ['house','townhouse','condo','condominium','apartment','home','duplex','residential'];
+        const commercialWords  = ['commercial','business','office','warehouse','store','shop','industrial','building'];
+        if (residentialWords.some(w => pt.includes(w)))      args.property_type = 'residential';
+        else if (commercialWords.some(w => pt.includes(w)))  args.property_type = 'commercial';
+        else { console.warn(`[REALTIME] Unknown property_type: "${args.property_type}"`); delete args.property_type; }
       }
 
       if (!Object.keys(args).length) {
