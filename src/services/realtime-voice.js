@@ -435,43 +435,6 @@ function createRealtimeBridge(twilioWs) {
       let r = await leadsDb.findByPhone(phone);
       if (!r) return;
 
-      // Safety net: only runs when no name was saved to the DB at all.
-      // Scans for explicit "my name is X" statements — strict pattern only.
-      // Never overrides an existing DB name to avoid clobbering correct values.
-      let scannedName = null;
-      if (!r.name) {
-        const namePattern = /(?:my name(?:'?s| is)|call me)\s+([A-Za-z]{2,}(?:\s+[A-Za-z]{2,})?)\b/i;
-        const userMsgs = transcript.filter(m => m.role === 'user');
-        for (const m of [...userMsgs].reverse()) {
-          const match = m.text.match(namePattern);
-          if (match) { scannedName = match[1].trim(); break; }
-        }
-        if (scannedName) {
-          console.log(`[REALTIME] No name in DB — using transcript name: "${scannedName}"`);
-          await leadsDb.update(phone, { name: scannedName });
-          r = await leadsDb.findByPhone(phone);
-        }
-      }
-
-      // Secondary: if DB still has no name, check Reva's confirmation line
-      if (!r.name) {
-        const confirmLine = [...transcript].reverse().find(m =>
-          m.role === 'assistant' && /you'?re\s+[A-Z]/i.test(m.text)
-        );
-        if (confirmLine) {
-          const match = confirmLine.text.match(/you'?re\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
-          if (match) {
-            const confirmedName = match[1].trim();
-            const notAName = ['calling', 'looking', 'saying', 'asking', 'the', 'all', 'set', 'good', 'just', 'about', 'still', 'not'];
-            if (!notAName.includes(confirmedName.split(' ')[0].toLowerCase())) {
-              console.log(`[REALTIME] Name from confirmation line: "${confirmedName}"`);
-              await leadsDb.update(phone, { name: confirmedName });
-              r = await leadsDb.findByPhone(phone);
-            }
-          }
-        }
-      }
-
       const name  = r.name ? ` ${r.name.split(' ')[0]}` : '';
       const lines = [
         r.issue_type            ? `🔧 Issue: ${r.issue_type}` : '',
