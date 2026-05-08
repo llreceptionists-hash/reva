@@ -194,7 +194,7 @@ function createRealtimeBridge(twilioWs) {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
             (() => {
-              const tz  = process.env.TIMEZONE || 'America/New_York';
+              const tz  = process.env.TIMEZONE || 'America/Vancouver';
               const now = new Date().toLocaleString('en-US', {
                 timeZone: tz, weekday: 'long', year: 'numeric',
                 month: 'long', day: 'numeric',
