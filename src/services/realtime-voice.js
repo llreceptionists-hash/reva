@@ -193,7 +193,7 @@ function createRealtimeBridge(twilioWs) {
         session: {
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
-            '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok", "uh" — only on clear statements.\n\nIf you hear something unclear or a short vague sound, just say "sorry, didn\'t catch that — what\'s going on with the roof?" Never make up or guess what they might have said. Never mention you are using any tools.',
+            '\n\nOnly call update_lead() with information the customer has EXPLICITLY said out loud. Never assume, guess, or infer details. Never call update_lead() based on vague sounds like "mm", "yeah", "ok", "uh" — only on clear statements.\n\nIMPORTANT: Any time the customer gives or corrects their name, address, or any other detail — even if you already had a value — you MUST immediately call update_lead() with the new value. If they say their name is different from what you expected, call update_lead({name: "new name"}) right away. This is critical — the database must reflect what the customer actually told you on this call.\n\nIf you hear something unclear or a short vague sound, just say "sorry, didn\'t catch that — what\'s going on with the roof?" Never make up or guess what they might have said. Never mention you are using any tools.',
           voice:                     'coral',
           input_audio_format:        'pcm16',
           output_audio_format:       'pcm16',
@@ -425,8 +425,26 @@ function createRealtimeBridge(twilioWs) {
         ).catch(() => {});
       }
 
-      const r = await leadsDb.findByPhone(phone);
+      let r = await leadsDb.findByPhone(phone);
       if (!r) return;
+
+      // Safety net: if the AI confirmed a name in the transcript that differs
+      // from the DB (e.g. customer corrected their name but update_lead wasn't called),
+      // extract it from the confirmation line and update the DB now.
+      const confirmLine = [...transcript].reverse().find(m =>
+        m.role === 'assistant' && /you'?re\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i.test(m.text)
+      );
+      if (confirmLine) {
+        const match = confirmLine.text.match(/you'?re\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)/i);
+        if (match) {
+          const confirmedName = match[1].trim();
+          if (r.name && confirmedName.toLowerCase() !== r.name.toLowerCase()) {
+            console.log(`[REALTIME] Name mismatch — DB: "${r.name}", confirmed: "${confirmedName}". Updating.`);
+            await leadsDb.update(phone, { name: confirmedName });
+            r = await leadsDb.findByPhone(phone);
+          }
+        }
+      }
 
       const name  = r.name ? ` ${r.name.split(' ')[0]}` : '';
       const lines = [
