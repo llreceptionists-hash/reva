@@ -230,11 +230,10 @@ function createRealtimeBridge(twilioWs) {
         switch (ev.type) {
 
           case 'session.updated':
-            // Session ready — flush buffered audio and trigger greeting
+            // Session ready — discard buffered audio (it's just connection noise)
+            // then trigger the greeting
             openAiReady = true;
-            for (const payload of audioQueue) forwardToOpenAI(payload);
             audioQueue.length = 0;
-            // Just trigger a response directly — system prompt handles the greeting
             openAiWs.send(JSON.stringify({ type: 'response.create' }));
             break;
 
