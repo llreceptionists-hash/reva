@@ -206,6 +206,25 @@
     .bubble.in { background: #3b82f6; color: #fff; border-bottom-right-radius: 4px; margin-left: auto; }
     .bubble.out { background: #1e293b; color: #e2e8f0; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.08); }
 
+    /* HOW IT WORKS */
+    .hiw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; max-width: 1000px; margin: 0 auto; }
+    @media (max-width: 768px) { .hiw-grid { grid-template-columns: 1fr; gap: 32px; } }
+    .hiw-block { display: flex; flex-direction: column; gap: 24px; }
+    .hiw-phase {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #3b82f6; padding-bottom: 12px; border-bottom: 1px solid rgba(59,130,246,0.3);
+    }
+    .hiw-steps { display: flex; flex-direction: column; gap: 24px; }
+    .hiw-step { display: flex; gap: 16px; align-items: flex-start; }
+    .hiw-num {
+      width: 28px; height: 28px; border-radius: 50%; background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.4); color: #3b82f6;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; margin-top: 2px;
+    }
+    .hiw-step strong { display: block; color: #f1f5f9; font-size: 15px; margin-bottom: 4px; }
+    .hiw-step p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0; }
+
     /* PRICING */
     .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
     .pricing-card {
@@ -451,6 +470,92 @@
       <h3>Set Up in 24 Hours</h3>
       <p>We handle the full setup. You give us your number and company name — we do the rest.</p>
     </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-label">How It Works</div>
+  <h2>Set up in 48 hours. Runs itself after that.</h2>
+  <p class="section-sub">We handle the entire setup. You don't touch a thing.</p>
+
+  <div class="hiw-grid">
+
+    <div class="hiw-block">
+      <div class="hiw-phase">Setup — Day 1</div>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-num">1</div>
+          <div>
+            <strong>You sign up</strong>
+            <p>Purchase through Whop and fill out a short onboarding form — company name, your phone number, and your booking link if you have one.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">2</div>
+          <div>
+            <strong>We configure Reva for your business</strong>
+            <p>We set up a dedicated phone number for your company and train Reva with your business name, service area, and availability. Takes us about an hour.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">3</div>
+          <div>
+            <strong>You forward your calls (takes 2 minutes)</strong>
+            <p>We send you a simple guide to forward your existing business number to Reva's line. One setting on your phone — done. You can turn it off anytime.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">4</div>
+          <div>
+            <strong>We test everything live</strong>
+            <p>We call your number, walk through a full conversation, confirm the alerts and texts are firing correctly, and make sure it all sounds natural before going live.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hiw-block">
+      <div class="hiw-phase">Every Day After That</div>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-num">5</div>
+          <div>
+            <strong>Customer calls your number</strong>
+            <p>Reva picks up instantly — 24/7, no hold music, no voicemail. She greets them naturally, asks about their roof, and keeps the conversation going.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">6</div>
+          <div>
+            <strong>Reva qualifies the lead</strong>
+            <p>She collects their name, address, what's wrong, whether it's a home or business, urgency level, and the best time for a free estimate — all in a natural conversation.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">7</div>
+          <div>
+            <strong>You get an instant alert</strong>
+            <p>The moment the call ends, you get a text with everything: name, address, issue, urgency, and appointment time. No calls to listen back to.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">8</div>
+          <div>
+            <strong>Customer gets a summary text</strong>
+            <p>Reva texts the customer their appointment details right after the call. If they don't respond to the initial text, Reva follows up automatically over the next week.</p>
+          </div>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">9</div>
+          <div>
+            <strong>You close the job</strong>
+            <p>Show up to the estimate. The lead is already qualified, they're expecting you, and Reva already built the rapport. You just close it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 
