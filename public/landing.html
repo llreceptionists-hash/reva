@@ -357,35 +357,6 @@
   <strong>Set up in under 24 hours.</strong> No tech skills required. Works on any phone number.
 </div>
 
-<!-- HOW IT WORKS -->
-<section id="how-it-works">
-  <div class="section-label">How It Works</div>
-  <h2>Reva handles leads while you're on the roof</h2>
-  <p class="section-sub">From missed call to booked appointment — fully automated.</p>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h3>Customer calls or texts</h3>
-      <p>Someone needs a new roof or has a leak. They call your business number or send a text.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h3>Reva responds instantly</h3>
-      <p>Within seconds, Reva texts back and starts a natural conversation — day or night, 24/7.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h3>Lead gets qualified</h3>
-      <p>Reva asks the right questions: address, issue type, urgency, timeline, and budget.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h3>Appointment booked</h3>
-      <p>Reva books the estimate and sends a confirmation. You get an alert with all the details.</p>
-    </div>
-  </div>
-</section>
-
 <!-- SMS DEMO -->
 <div class="demo-section">
   <div class="demo-inner">
@@ -405,16 +376,18 @@
         <strong>Van City Roofing</strong>
         Text Message
       </div>
-      <div class="bubble in">Hi I think my roof is leaking</div>
-      <div class="bubble out">Hi! 👋 Welcome to Van City Roofing! I'm Reva, your roofing assistant. I'd love to help get that sorted out! What's your name?</div>
+      <div class="bubble in">hi my roof is leaking bad</div>
+      <div class="bubble out">oh no that's not good — is water actively coming in right now?</div>
+      <div class="bubble in">not right now but when it rains its soaking my ceiling</div>
+      <div class="bubble out">got it, we need to get someone out there before the next rain. what's your name?</div>
       <div class="bubble in">Mike</div>
-      <div class="bubble out">Nice to meet you Mike! What's the address of the property?</div>
-      <div class="bubble in">123 Main St, Burnaby</div>
-      <div class="bubble out">Got it! How urgent is the leak — is water actively coming in right now?</div>
-      <div class="bubble in">Yes its pretty bad</div>
-      <div class="bubble out">Understood Mike — we'll prioritize you! 🚨 Our team can come Thursday morning. Does that work?</div>
-      <div class="bubble in">Perfect yes</div>
-      <div class="bubble out">✅ Booked! Thursday morning at your place. We'll send a reminder the night before. See you then!</div>
+      <div class="bubble out">hey Mike, what's the address?</div>
+      <div class="bubble in">123 Main St Burnaby</div>
+      <div class="bubble out">perfect. is this a house or a commercial property?</div>
+      <div class="bubble in">house</div>
+      <div class="bubble out">ok — we can get someone out Thursday morning for a free estimate. work for you?</div>
+      <div class="bubble in">yes perfect</div>
+      <div class="bubble out">locked in! Thursday morning at 123 Main St. our team will confirm the night before 👍</div>
     </div>
   </div>
 </div>
@@ -433,7 +406,7 @@
     <div class="feature">
       <div class="feature-icon">🤖</div>
       <h3>AI Lead Qualification</h3>
-      <p>Reva asks the right questions and scores leads automatically — you only talk to serious buyers.</p>
+      <p>Reva collects name, address, issue, urgency, and property type — so you know exactly what you're walking into.</p>
     </div>
     <div class="feature">
       <div class="feature-icon">📅</div>
@@ -588,22 +561,15 @@
 <!-- CONTACT FORM -->
 <div class="contact-section" id="contact">
   <div class="contact-inner">
-    <h2>Get Started</h2>
-    <p>Fill out the form and we'll have Reva set up for your company within 24 hours.</p>
+    <h2>Get Set Up</h2>
+    <p>Fill this out after purchasing and we'll have Reva live for your business within 24 hours.</p>
     <form id="contact-form">
       <input type="text" placeholder="Your Name" required>
       <input type="text" placeholder="Company Name" required>
-      <input type="tel" placeholder="Your Phone Number" required>
-      <input type="email" placeholder="Email Address" required>
-      <select>
-        <option value="" disabled selected>How many leads/month do you get?</option>
-        <option>Less than 20</option>
-        <option>20–50</option>
-        <option>50–100</option>
-        <option>100+</option>
-      </select>
-      <textarea placeholder="Anything else you'd like us to know? (optional)"></textarea>
-      <button type="submit" class="form-btn">Book My Free Demo →</button>
+      <input type="tel" placeholder="Your Phone Number (this is where lead alerts get sent)" required>
+      <input type="tel" placeholder="Your Business Phone Number (the one customers call)">
+      <input type="text" placeholder="Booking Link (if you have one — optional)">
+      <button type="submit" class="form-btn">Submit →</button>
     </form>
     <div id="form-success">🎉 Got it! We'll reach out within a few hours to get you set up.</div>
   </div>
@@ -626,13 +592,13 @@
   document.getElementById('contact-form').addEventListener('submit', async e => {
     e.preventDefault();
     const form = e.target;
-    const inputs = form.querySelectorAll('input, select, textarea');
-    const [name, company, phone, email, leads, notes] = [...inputs].map(i => i.value);
+    const inputs = form.querySelectorAll('input');
+    const [name, company, owner_phone, business_phone, booking_url] = [...inputs].map(i => i.value);
     try {
       await fetch('/api/demo-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, company, phone, email, leads, notes })
+        body: JSON.stringify({ name, company, owner_phone, business_phone, booking_url })
       });
     } catch (_) {}
     form.style.display = 'none';
