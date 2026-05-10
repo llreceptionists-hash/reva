@@ -225,6 +225,20 @@
     .hiw-step strong { display: block; color: #f1f5f9; font-size: 15px; margin-bottom: 4px; }
     .hiw-step p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0; }
 
+    /* OWNER ALERTS */
+    .alerts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; max-width: 1000px; margin: 0 auto; align-items: center; }
+    @media (max-width: 768px) { .alerts-grid { grid-template-columns: 1fr; gap: 40px; } }
+    .alerts-text { display: flex; flex-direction: column; gap: 32px; }
+    .alert-item { display: flex; gap: 16px; align-items: flex-start; }
+    .alert-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+    .alert-item strong { display: block; color: #f1f5f9; font-size: 15px; margin-bottom: 6px; }
+    .alert-item p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0; }
+    .alert-phone { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 28px; }
+    .alert-phone-header { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 20px; font-weight: 600; }
+    .alert-msg-label { font-size: 11px; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 600; }
+    .alert-bubble { background: #1e293b; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; font-size: 13px; color: #cbd5e1; line-height: 1.7; }
+    .alert-bubble-blue { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.25); }
+
     /* PRICING */
     .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto; }
     .pricing-card {
@@ -391,6 +405,69 @@
     </div>
   </div>
 </div>
+
+<!-- OWNER ALERTS -->
+<section id="alerts">
+  <div class="section-label">Owner Alerts</div>
+  <h2>You get the full picture the second the call ends</h2>
+  <p class="section-sub">No listening to voicemails. No chasing customers for details. It's all in the text.</p>
+  <div class="alerts-grid">
+
+    <div class="alerts-text">
+      <div class="alert-item">
+        <div class="alert-icon">📲</div>
+        <div>
+          <strong>Instant lead alert — straight to your phone</strong>
+          <p>The moment Reva finishes a call or conversation, you get a text with everything: name, address, issue, urgency, property type, and the appointment time they agreed to.</p>
+        </div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-icon">📋</div>
+        <div>
+          <strong>Customer gets a summary too</strong>
+          <p>Reva texts the customer a recap of their appointment right after — so they remember, and you look professional without doing anything.</p>
+        </div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-icon">🔄</div>
+        <div>
+          <strong>Automatic follow-ups if they go quiet</strong>
+          <p>If a lead stops responding, Reva follows up at 2 hours, 2 days, and 7 days on her own. You don't have to remember a thing.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alerts-mockup">
+      <div class="alert-phone">
+        <div class="alert-phone-header">Messages · Reva AI</div>
+        <div class="alert-msg">
+          <div class="alert-msg-label">You receive:</div>
+          <div class="alert-bubble">
+            🔔 REVA ALERT: 📞 NEW CALL LEAD<br>
+            👤 Name: Mike Johnson<br>
+            📞 Phone: (604) 555-0192<br>
+            📍 123 Main St, Burnaby<br>
+            🔧 Issue: water coming through ceiling<br>
+            ⚡ Urgency: Emergency<br>
+            🏡 Property: Residential<br>
+            📅 Appt: Thursday morning
+          </div>
+        </div>
+        <div class="alert-msg" style="margin-top:20px;">
+          <div class="alert-msg-label">Mike receives:</div>
+          <div class="alert-bubble alert-bubble-blue">
+            Hi Mike! Here's your summary from Aldergrove Roofing:<br><br>
+            🔧 Issue: water coming through ceiling<br>
+            📍 123 Main St, Burnaby<br>
+            📅 Appt: Thursday morning<br><br>
+            ✅ Our team will confirm shortly. Reply anytime!
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
 
 <!-- FEATURES -->
 <section>
