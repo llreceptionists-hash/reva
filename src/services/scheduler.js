@@ -63,13 +63,13 @@ function startScheduler() {
     );
   });
 
-  cron.schedule('0 9 * * *', () => {
+  cron.schedule('0 20 * * *', () => {
     staleLeadDigest().catch(err =>
       console.error('[SCHEDULER] Error in stale lead digest:', err)
     );
   });
 
-  console.log('[SCHEDULER] Started — follow-ups every 2 min, digest at 9 AM');
+  console.log('[SCHEDULER] Started — follow-ups every 2 min, digest at noon Vancouver');
 }
 
 module.exports = { startScheduler, processPendingFollowUps };

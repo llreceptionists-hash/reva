@@ -9,7 +9,7 @@
 
 const WebSocket  = require('ws');
 const Anthropic  = require('@anthropic-ai/sdk');
-const { leads: leadsDb, conversations, clients } = require('../db/leads');
+const { leads: leadsDb, conversations, followUps, clients } = require('../db/leads');
 const { alertOwner, sendSms }                    = require('./sms');
 const { getVoiceSystemPrompt }                   = require('../prompts/system');
 
@@ -554,6 +554,18 @@ function createRealtimeBridge(twilioWs) {
         `💬 Source: Phone call`,
         revaClient
       ).catch(console.error);
+
+      // Schedule follow-ups if no appointment was booked
+      if (!r.preferred_appointment) {
+        const { getFollowUpMessages } = require('../prompts/system');
+        const fuMessages = getFollowUpMessages(r.name, revaClient);
+        await followUps.cancelForPhone(phone);
+        for (const fu of fuMessages) {
+          const scheduledAt = new Date(Date.now() + fu.delay_hours * 3600 * 1000).toISOString();
+          await followUps.schedule(phone, fu.message, scheduledAt, 'no_response', r.id).catch(() => {});
+        }
+        console.log(`[REALTIME] Scheduled ${fuMessages.length} follow-ups for ${phone}`);
+      }
 
     } catch (err) {
       console.error('[REALTIME] saveCallAndAlert error:', err);
