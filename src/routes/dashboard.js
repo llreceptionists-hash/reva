@@ -122,17 +122,15 @@ router.delete('/clients/:id', async (req, res) => {
 
 // POST /api/demo-request — landing page form submission
 router.post('/demo-request', async (req, res) => {
-  const { name, company, phone, email, leads, notes } = req.body;
+  const { name, company, owner_phone, booking_url } = req.body;
   try {
     const { alertOwner } = require('../services/sms');
     await alertOwner(
-      `🚀 NEW DEMO REQUEST!\n` +
+      `🚀 NEW CLIENT SIGNUP!\n` +
       `👤 Name: ${name || 'Unknown'}\n` +
       `🏢 Company: ${company || 'Unknown'}\n` +
-      `📞 Phone: ${phone || 'Not given'}\n` +
-      `📧 Email: ${email || 'Not given'}\n` +
-      `📊 Leads/month: ${leads || 'Not specified'}\n` +
-      `💬 Notes: ${notes || 'None'}`
+      `📞 Phone: ${owner_phone || 'Not given'}\n` +
+      `🔗 Booking link: ${booking_url || 'None'}`
     );
     res.json({ ok: true });
   } catch (err) {
