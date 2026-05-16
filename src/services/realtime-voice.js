@@ -235,20 +235,20 @@ function createRealtimeBridge(twilioWs) {
   // ── Audio helpers ───────────────────────────────────────────────────────────
 
   function forwardToOpenAI(base64mulaw) {
-    // GA API accepts audio/pcmu (mulaw) directly — no conversion needed
+    // Session configured with input_audio_format: 'g711_ulaw' — pass mulaw straight through
     openAiWs.send(JSON.stringify({
       type:  'input_audio_buffer.append',
       audio: base64mulaw,
     }));
   }
 
-  function sendToTwilio(base64mulaw) {
-    // GA API outputs audio/pcmu (mulaw) directly — pass straight to Twilio
+  function sendToTwilio(base64ulaw) {
+    // Session configured with output_audio_format: 'g711_ulaw' — pass straight to Twilio
     if (!streamSid) return;
     twilioWs.send(JSON.stringify({
       event: 'media',
       streamSid,
-      media: { payload: base64mulaw },
+      media: { payload: base64ulaw },
     }));
   }
 
@@ -277,18 +277,35 @@ function createRealtimeBridge(twilioWs) {
         const ev = JSON.parse(raw);
         switch (ev.type) {
 
-          case 'session.created':
-            console.log(`[REALTIME] session.created:`, JSON.stringify(ev.session).slice(0, 300));
-            // Now configure the session and trigger greeting
+          case 'session.created': {
+            console.log(`[REALTIME] session.created, configuring...`);
+            const tz  = process.env.TIMEZONE || 'America/Vancouver';
+            const now = new Date().toLocaleString('en-US', {
+              timeZone: tz, weekday: 'long', year: 'numeric',
+              month: 'long', day: 'numeric',
+              hour: 'numeric', minute: '2-digit', hour12: true,
+            });
+            const systemPrompt = getVoiceSystemPrompt(revaClient) +
+              `\n\nCURRENT DATE & TIME: ${now} (${tz}).` +
+              '\n\nOnly use info from this call. Never assume you know the customer\'s name or details.';
+            openAiWs.send(JSON.stringify({
+              type: 'session.update',
+              session: {
+                type:                'realtime',
+                instructions:        systemPrompt,
+                output_modalities:   ['audio'],
+                input_audio_format:  'g711_ulaw',
+                output_audio_format: 'g711_ulaw',
+              },
+            }));
+            break;
+          }
+
+          case 'session.updated':
+            console.log(`[REALTIME] session.updated — triggering greeting`);
             openAiReady = true;
             audioQueue.length = 0;
             openAiWs.send(JSON.stringify({ type: 'response.create' }));
-            break;
-
-          case 'session.updated':
-            console.log(`[REALTIME] session.updated OK`);
-            openAiReady = true;
-            audioQueue.length = 0;
             break;
 
           case 'input_audio_buffer.speech_started':
