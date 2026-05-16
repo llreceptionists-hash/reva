@@ -274,26 +274,21 @@ function createRealtimeBridge(twilioWs) {
     openAiWs.on('open', () => {
       console.log(`[REALTIME] OpenAI connected for ${phone}`);
 
+      const tz  = process.env.TIMEZONE || 'America/Vancouver';
+      const now = new Date().toLocaleString('en-US', {
+        timeZone: tz, weekday: 'long', year: 'numeric',
+        month: 'long', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      });
+      const systemPrompt = getVoiceSystemPrompt(revaClient) +
+        `\n\nCURRENT DATE & TIME: ${now} (${tz}). Use this when discussing availability or appointment times. Never suggest a time that has already passed today.` +
+        '\n\nCRITICAL — ONLY use information from THIS call:\n- Never assume you already know the customer\'s name, address, or any details\n- If you have not been told something, you do not know it — ask for it naturally\n- Do not book or confirm an appointment unless the customer has explicitly agreed to a specific time on this call\n- If you hear silence or cannot understand what was said, just say "hey sorry, didn\'t quite catch that — what\'s going on with the roof?"\n\nNever mention you are using any tools.';
+
       openAiWs.send(JSON.stringify({
         type: 'session.update',
         session: {
-          type:         'realtime',
-          modalities:   ['text', 'audio'],
-          instructions: getVoiceSystemPrompt(revaClient) +
-            (() => {
-              const tz  = process.env.TIMEZONE || 'America/Vancouver';
-              const now = new Date().toLocaleString('en-US', {
-                timeZone: tz, weekday: 'long', year: 'numeric',
-                month: 'long', day: 'numeric',
-                hour: 'numeric', minute: '2-digit', hour12: true,
-              });
-              return `\n\nCURRENT DATE & TIME: ${now} (${tz}). Use this when discussing availability or appointment times. Never suggest a time that has already passed today.`;
-            })() +
-            '\n\nCRITICAL — ONLY use information from THIS call:\n- Never assume you already know the customer\'s name, address, or any details\n- Never say things like "oh I know your name" or "I have your info" unless they explicitly told you that on this exact call\n- If you have not been told something, you do not know it — ask for it naturally\n- Do not book or confirm an appointment unless the customer has explicitly agreed to a specific time on this call\n- If you hear silence or cannot understand what was said, just say "hey sorry, didn\'t quite catch that — what\'s going on with the roof?"\n\nupdate_lead() rules:\n- Call it every time the customer gives ANY new info — name, address, issue, appointment, property type\n- Call it AGAIN immediately whenever the customer corrects or changes something — even if you already saved it\n- For issue_type: always save the customer\'s EXACT words. Never paraphrase. "hole in my roof" stays "hole in my roof", not "small repair"\n- Never call update_lead() based on vague sounds like "mm", "yeah", "ok" — only on clear explicit statements\n\nNever mention you are using any tools.',
-          voice:                     'coral',
-          input_audio_format:        'pcm16',
-          output_audio_format:       'pcm16',
-          input_audio_transcription: { model: 'whisper-1' },
+          instructions: systemPrompt,
+          voice:        'coral',
           turn_detection: {
             type:                'server_vad',
             threshold:           0.95,
@@ -303,16 +298,16 @@ function createRealtimeBridge(twilioWs) {
           tools: [{
             type:        'function',
             name:        'update_lead',
-            description: 'Silently save customer info as you gather it on the call. Call this every time any piece of info is first given OR corrected — including if the customer changes their appointment time, address, or any other detail. Always save the customer\'s exact words for issue_type, do not paraphrase or interpret (e.g. save "hole in my roof" not "small repair").',
+            description: 'Save customer info gathered on the call.',
             parameters: {
               type: 'object',
               properties: {
                 name:                  { type: 'string' },
                 address:               { type: 'string' },
                 city:                  { type: 'string' },
-                issue_type:            { type: 'string', description: 'The exact words the customer used to describe the problem. Do NOT summarize or categorize — save verbatim e.g. "hole in my roof", "shingles blowing off", "water coming through ceiling".' },
+                issue_type:            { type: 'string' },
                 urgency:               { type: 'string', enum: ['emergency','urgent','normal','low'] },
-                property_type:         { type: 'string', enum: ['residential','commercial'], description: 'residential = house, townhouse, condo, apartment. commercial = business, office, warehouse, store.' },
+                property_type:         { type: 'string', enum: ['residential','commercial'] },
                 preferred_appointment: { type: 'string' },
                 stage:                 { type: 'string', enum: ['new','contacted','qualified','appointment_set'] },
                 priority:              { type: 'string', enum: ['high','normal','low'] },
