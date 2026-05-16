@@ -297,9 +297,8 @@ function createRealtimeBridge(twilioWs) {
             openAiWs.send(JSON.stringify({
               type: 'session.update',
               session: {
-                type:              'realtime',
-                instructions:      systemPrompt,
-                output_modalities: ['audio'],
+                type:         'realtime',
+                instructions: systemPrompt,
               },
             }));
             break;
@@ -309,7 +308,10 @@ function createRealtimeBridge(twilioWs) {
             console.log(`[REALTIME] session.updated — triggering greeting`);
             openAiReady = true;
             audioQueue.length = 0;
-            openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            openAiWs.send(JSON.stringify({
+              type: 'response.create',
+              response: { modalities: ['audio', 'text'] },
+            }));
             break;
 
           case 'input_audio_buffer.speech_started':
