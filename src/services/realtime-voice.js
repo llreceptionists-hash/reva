@@ -287,6 +287,7 @@ function createRealtimeBridge(twilioWs) {
       openAiWs.send(JSON.stringify({
         type: 'session.update',
         session: {
+          type:         'realtime',
           instructions: systemPrompt,
           voice:        'coral',
           turn_detection: {
