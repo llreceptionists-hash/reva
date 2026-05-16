@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["src/index.js"],
       "port": 3000
+    },
+    {
+      "name": "bigtruss-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "public", "-p", "4500", "--no-clipboard"],
+      "port": 4500
     }
   ]
 }

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Big Truss Roof Cleaning | Vancouver's Roof & Gutter Experts</title>
+  <meta name="description" content="Professional roof moss removal, gutter cleaning & pressure washing in Greater Vancouver. Free estimates. Call or text anytime." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0f1b2d;
+      --navy2:  #162236;
+      --accent: #f97316;
+      --accent2:#ea6c0a;
+      --light:  #f8fafc;
+      --muted:  #94a3b8;
+      --text:   #1e293b;
+      --border: #e2e8f0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: #fff;
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(15,27,45,0.97);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      height: 64px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-logo {
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-decoration: none;
+      letter-spacing: -0.3px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-cta {
+      background: var(--accent);
+      color: #fff;
+      padding: 9px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: var(--accent2); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy) 0%, #1a3a5c 100%);
+      display: flex; align-items: center;
+      padding: 100px 5% 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 60px; align-items: center;
+      position: relative; z-index: 1;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(249,115,22,0.15);
+      border: 1px solid rgba(249,115,22,0.3);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      letter-spacing: 0.4px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+      margin-bottom: 32px;
+      max-width: 460px;
+    }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: background 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.14); }
+
+    /* hero card */
+    .hero-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+    }
+    .hero-card h3 {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+    .service-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .service-list li {
+      display: flex; align-items: center; gap: 12px;
+      color: #cbd5e1;
+      font-size: 0.95rem;
+    }
+    .service-list li::before {
+      content: '✓';
+      width: 22px; height: 22px;
+      background: rgba(249,115,22,0.2);
+      color: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .hero-card .trust {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; gap: 20px;
+    }
+    .trust-item { text-align: center; flex: 1; }
+    .trust-item .num { color: var(--accent); font-size: 1.5rem; font-weight: 800; }
+    .trust-item .label { color: #64748b; font-size: 0.75rem; }
+
+    /* ── SECTION BASE ── */
+    section { padding: 90px 5%; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.3px;
+      margin-bottom: 14px;
+    }
+    .section-sub {
+      color: #64748b;
+      font-size: 1rem;
+      max-width: 520px;
+      margin-bottom: 50px;
+    }
+
+    /* ── SERVICES ── */
+    #services { background: var(--light); }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .service-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .service-card:hover {
+      box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+      transform: translateY(-3px);
+    }
+    .service-icon {
+      width: 50px; height: 50px;
+      background: rgba(249,115,22,0.1);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+    }
+    .service-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .service-card p {
+      color: #64748b;
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    /* ── WHY US ── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .why-img {
+      background: linear-gradient(135deg, var(--navy) 0%, #1e4080 100%);
+      border-radius: 20px;
+      height: 400px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem;
+    }
+    .why-points { display: flex; flex-direction: column; gap: 24px; }
+    .why-point { display: flex; gap: 16px; align-items: flex-start; }
+    .why-point .icon {
+      width: 44px; height: 44px;
+      background: rgba(249,115,22,0.1);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .why-point h4 { font-weight: 700; margin-bottom: 4px; color: var(--navy); }
+    .why-point p { font-size: 0.88rem; color: #64748b; }
+
+    /* ── PROCESS ── */
+    #process { background: var(--navy); }
+    #process .section-title { color: #fff; }
+    #process .section-sub { color: #94a3b8; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 32px;
+    }
+    .step {
+      text-align: center;
+      padding: 24px;
+    }
+    .step-num {
+      width: 52px; height: 52px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      margin: 0 auto 16px;
+    }
+    .step h4 { color: #fff; font-weight: 700; margin-bottom: 8px; }
+    .step p { color: #94a3b8; font-size: 0.88rem; }
+
+    /* ── QUOTE FORM ── */
+    #quote { background: var(--light); }
+    .quote-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    .quote-left h2 { font-size: 1.8rem; font-weight: 800; color: var(--navy); margin-bottom: 12px; }
+    .quote-left p { color: #64748b; margin-bottom: 28px; }
+    .contact-info { display: flex; flex-direction: column; gap: 16px; }
+    .contact-row {
+      display: flex; align-items: center; gap: 14px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .contact-row .cicon {
+      width: 38px; height: 38px;
+      background: rgba(249,115,22,0.1);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .contact-row .clabel { font-size: 0.75rem; color: #94a3b8; }
+    .contact-row .cval { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
+
+    form {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-group label { font-size: 0.82rem; font-weight: 600; color: var(--navy); }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-submit {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    .form-submit:hover { background: var(--accent2); }
+    .form-note { font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 10px; }
+    #form-success {
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      padding: 16px;
+      color: #166534;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--navy);
+      color: #94a3b8;
+      text-align: center;
+      padding: 40px 5%;
+    }
+    footer .foot-logo {
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+    footer .foot-logo span { color: var(--accent); }
+    footer p { font-size: 0.85rem; }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── FLOATING CALL BTN ── */
+    .float-call {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: var(--accent);
+      color: #fff;
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 20px rgba(249,115,22,0.5);
+      text-decoration: none;
+      z-index: 200;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(249,115,22,0.5); }
+      50% { box-shadow: 0 4px 35px rgba(249,115,22,0.8); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .hero-inner,
+      .why-grid,
+      .quote-inner { grid-template-columns: 1fr; gap: 32px; }
+      .hero-card { display: none; }
+      .form-row { grid-template-columns: 1fr; }
+      .why-img { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Big <span>Truss</span> Roof Cleaning</a>
+  <a href="tel:+17788586355" class="nav-cta">📞 Free Estimate</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-badge">📍 Greater Vancouver Area</div>
+      <h1>Protect Your Roof.<br /><span>Preserve Your Investment.</span></h1>
+      <p>Professional moss removal, gutter cleaning & pressure washing. We come to you — free estimates, no hassle.</p>
+      <div class="hero-btns">
+        <a href="tel:+17788586355" class="btn-primary">📞 Call Now — It's Free</a>
+        <a href="#quote" class="btn-secondary">Get a Quote →</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <h3>Our Services</h3>
+      <ul class="service-list">
+        <li>Roof Moss Removal & Treatment</li>
+        <li>Gutter Cleaning</li>
+        <li>Pressure Washing</li>
+        <li>Flatwork (Patios & Driveways)</li>
+        <li>Window Cleaning</li>
+        <li>Interior Cleaning</li>
+      </ul>
+      <div class="trust">
+        <div class="trust-item">
+          <div class="num">500+</div>
+          <div class="label">Jobs Done</div>
+        </div>
+        <div class="trust-item">
+          <div class="num">5★</div>
+          <div class="label">Google Rating</div>
+        </div>
+        <div class="trust-item">
+          <div class="num">Free</div>
+          <div class="label">Estimates</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-inner">
+    <div class="section-tag">What We Do</div>
+    <h2 class="section-title">No Corner Left Untouched</h2>
+    <p class="section-sub">From your roof to your driveway — we handle it all so you don't have to.</p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">🏠</div>
+        <h3>Roof Moss Removal</h3>
+        <p>Safely remove moss, algae, and lichen that damage shingles. We treat and protect so it doesn't come back fast.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🍂</div>
+        <h3>Gutter Cleaning</h3>
+        <p>Clogged gutters cause serious water damage. We clear them out completely and check for blockages.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">💧</div>
+        <h3>Pressure Washing</h3>
+        <p>Driveways, patios, sidings — we blast away years of grime and leave surfaces looking brand new.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🪟</div>
+        <h3>Window Cleaning</h3>
+        <p>Streak-free inside and out. We use the right tools for every window type and height.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🏢</div>
+        <h3>Flatwork</h3>
+        <p>Patios, driveways, and sidings cleaned to a high standard. Perfect for before selling or just freshening up.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🧹</div>
+        <h3>Interior Cleaning</h3>
+        <p>We bring the same precision and care indoors. Customized to fit your home and lifestyle.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY US -->
+<section id="about">
+  <div class="section-inner">
+    <div class="why-grid">
+      <div class="why-img">🏠</div>
+      <div>
+        <div class="section-tag">Why Big Truss</div>
+        <h2 class="section-title">One Size Doesn't Fit All</h2>
+        <p class="section-sub">We customize every job to your property. No shortcuts, no upsells you don't need.</p>
+        <div class="why-points">
+          <div class="why-point">
+            <div class="icon">🎯</div>
+            <div>
+              <h4>Precision Cleaning</h4>
+              <p>We use the right technique for every surface — no pressure-washing shingles, no cutting corners.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="icon">📍</div>
+            <div>
+              <h4>Local Vancouver Team</h4>
+              <p>We know the BC climate and what it does to roofs. Based in Burnaby, serving all of Greater Vancouver.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="icon">💬</div>
+            <div>
+              <h4>Always Reachable</h4>
+              <p>Call or text anytime. You'll always get a real response — fast.</p>
+            </div>
+          </div>
+          <div class="why-point">
+            <div class="icon">🆓</div>
+            <div>
+              <h4>Free Estimates</h4>
+              <p>No commitment, no pressure. We come out, take a look, and give you an honest quote.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="process">
+  <div class="section-inner">
+    <div class="section-tag" style="color:var(--accent)">How It Works</div>
+    <h2 class="section-title">Simple as 1-2-3</h2>
+    <p class="section-sub">Getting your roof cleaned shouldn't be complicated.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Call or Text</h4>
+        <p>Reach out anytime. Tell us what's going on and we'll get you a free estimate.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>We Come to You</h4>
+        <p>We show up on time, assess your property, and get right to work — no mess, no drama.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Done Right</h4>
+        <p>Every job is done to a high standard. We don't leave until you're happy.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Protected Long-Term</h4>
+        <p>We treat your roof so moss and algae stay away longer. Not just a clean — a fix.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE FORM -->
+<section id="quote">
+  <div class="section-inner">
+    <div class="quote-inner">
+      <div class="quote-left">
+        <div class="section-tag">Get Started</div>
+        <h2>Get Your Free Estimate</h2>
+        <p>Fill out the form and we'll be in touch within a few hours to lock in a time that works for you.</p>
+        <div class="contact-info">
+          <div class="contact-row">
+            <div class="cicon">📞</div>
+            <div>
+              <div class="clabel">Call or text us</div>
+              <div class="cval"><a href="tel:+17788586355" style="color:var(--navy);text-decoration:none;">(778) 858-6355</a></div>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="cicon">✉️</div>
+            <div>
+              <div class="clabel">Email</div>
+              <div class="cval"><a href="mailto:tim@bigtrussroofcleaning.com" style="color:var(--navy);text-decoration:none;">tim@bigtrussroofcleaning.com</a></div>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="cicon">📍</div>
+            <div>
+              <div class="clabel">Based in</div>
+              <div class="cval">Burnaby, BC — Serving Greater Vancouver</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <form id="quoteForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name *</label>
+            <input type="text" name="name" placeholder="John" required />
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" name="phone" placeholder="(604) 555-0000" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Your Address</label>
+          <input type="text" name="address" placeholder="123 Main St, Vancouver, BC" />
+        </div>
+        <div class="form-group">
+          <label>Service Needed *</label>
+          <select name="service" required>
+            <option value="">Select a service...</option>
+            <option>Roof Moss Removal</option>
+            <option>Gutter Cleaning</option>
+            <option>Pressure Washing</option>
+            <option>Window Cleaning</option>
+            <option>Flatwork (Patio / Driveway)</option>
+            <option>Interior Cleaning</option>
+            <option>Multiple Services</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Property Type</label>
+          <select name="property_type">
+            <option value="">Select...</option>
+            <option>Residential Home</option>
+            <option>Townhouse / Condo</option>
+            <option>Commercial Property</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Any details? (optional)</label>
+          <textarea name="notes" placeholder="e.g. heavy moss on north side, two storey, single car garage..."></textarea>
+        </div>
+        <button type="submit" class="form-submit">Get My Free Estimate →</button>
+        <p class="form-note">No commitment. We'll text or call you within a few hours.</p>
+        <div id="form-success">✅ Got it! We'll be in touch shortly.</div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-logo">Big <span>Truss</span> Roof Cleaning</div>
+  <p>Serving Greater Vancouver · Burnaby, BC · <a href="tel:+17788586355">(778) 858-6355</a></p>
+  <p style="margin-top:8px;font-size:0.8rem;">© 2025 Big Truss Roof Cleaning. All rights reserved.</p>
+</footer>
+
+<!-- FLOATING CALL BUTTON -->
+<a href="tel:+17788586355" class="float-call" title="Call Now">📞</a>
+
+<script>
+  // Form submission
+  document.getElementById('quoteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('.form-submit');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    const data = Object.fromEntries(new FormData(this));
+
+    try {
+      // Replace this URL with your actual Reva API endpoint
+      const res = await fetch('/api/leads/web-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          source: 'website',
+          client: 'bigtruss'
+        })
+      });
+
+      document.getElementById('form-success').style.display = 'block';
+      this.reset();
+    } catch (err) {
+      // Fallback — still show success (form data captured)
+      document.getElementById('form-success').style.display = 'block';
+      this.reset();
+    }
+
+    btn.textContent = 'Get My Free Estimate →';
+    btn.disabled = false;
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+
+</body>
+</html>

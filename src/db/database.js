@@ -17,9 +17,12 @@ async function init() {
       booking_url TEXT,
       forward_phone TEXT,
       voice TEXT DEFAULT 'Polly.Joanna-Neural',
+      address TEXT,
       active INTEGER DEFAULT 1,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    ALTER TABLE clients ADD COLUMN IF NOT EXISTS address TEXT;
 
     CREATE TABLE IF NOT EXISTS leads (
       id SERIAL PRIMARY KEY,

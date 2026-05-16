@@ -15,13 +15,60 @@ const { getVoiceSystemPrompt }                   = require('../prompts/system');
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// ── Pricing calculator ────────────────────────────────────────────────────────
+function getEstimateRange(issueType, roofSize, notes) {
+  if (!issueType) return null;
+  const issue = issueType.toLowerCase();
+  const size  = (roofSize || notes || '').toLowerCase();
+
+  const isSmall  = /small|tiny|bungalow|1\s*stor|one.stor|1000|1100|1200|1300|1400|1500/.test(size);
+  const isLarge  = /large|big|3\s*stor|three.stor|2500|3000|3500|4000|huge/.test(size);
+  const isMed    = !isSmall && !isLarge;
+
+  // Moss / roof cleaning
+  if (/moss|algae|lichen|roof\s*clean|roof\s*treat/.test(issue)) {
+    if (isSmall)  return '$250–$450';
+    if (isLarge)  return '$700–$1,100+';
+    return '$450–$700'; // medium default
+  }
+
+  // Gutter cleaning
+  if (/gutter/.test(issue)) {
+    const hasGuards = /guard/.test(size + issue);
+    if (isSmall)  return hasGuards ? '$170–$280' : '$120–$180';
+    if (isLarge)  return hasGuards ? '$380–$500' : '$280–$400';
+    return hasGuards ? '$250–$380' : '$180–$280';
+  }
+
+  // Pressure washing
+  if (/pressure|wash|driveway|patio|siding/.test(issue)) {
+    if (isSmall)  return '$150–$250';
+    if (isLarge)  return '$400–$600+';
+    return '$250–$400';
+  }
+
+  // Window cleaning
+  if (/window/.test(issue)) {
+    if (isSmall)  return '$100–$200';
+    if (isLarge)  return '$350–$550';
+    return '$200–$350';
+  }
+
+  // Multiple services
+  if (/multiple|everything|all|combo|package/.test(issue)) {
+    return '$400–$900+ depending on services';
+  }
+
+  return null; // unknown service — don't guess
+}
+
 // Extract structured lead data from transcript using Claude
 async function extractLeadFromTranscript(transcript) {
   const text = transcript.map(m => `${m.role === 'user' ? 'Customer' : 'Reva'}: ${m.text}`).join('\n');
   try {
     const msg = await anthropic.messages.create({
       model: 'claude-haiku-4-5',
-      max_tokens: 300,
+      max_tokens: 400,
       messages: [{
         role: 'user',
         content: `Extract lead info from this roofing call transcript. Return ONLY valid JSON, nothing else.
@@ -37,7 +84,9 @@ Return this JSON (use null for anything not mentioned):
   "issue_type": "exact words customer used to describe the problem or null",
   "urgency": "emergency|urgent|normal|low or null",
   "property_type": "residential|commercial or null",
-  "preferred_appointment": "day and time they agreed to or null"
+  "preferred_appointment": "day and time they agreed to or null",
+  "roof_size": "small|medium|large or approximate sqft if mentioned or null",
+  "notes": "any extra details like shingle type, gutter guards, storeys, etc or null"
 }`
       }],
     });
@@ -543,11 +592,15 @@ function createRealtimeBridge(twilioWs) {
         ).catch(() => {});
       }
 
+      const estimate = getEstimateRange(r.issue_type, r.roof_size, r.notes);
+
       await alertOwner(
         `📞 NEW CALL LEAD — Call them back!\n` +
         `👤 Name: ${r.name || 'Unknown'}\n📞 Phone: ${phone}\n` +
         `📍 ${r.address || r.city || 'Not given'}\n` +
         `🔧 Issue: ${r.issue_type || '?'}\n` +
+        `📐 Size: ${r.roof_size || 'Not specified'}\n` +
+        (estimate ? `💰 Est. Range: ${estimate}\n` : '') +
         `⚡ Urgency: ${r.urgency || 'Normal'}\n` +
         `🏡 Property: ${r.property_type || '?'}\n` +
         `📅 Appt: ${r.preferred_appointment || 'Not set'}\n` +

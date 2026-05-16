@@ -145,17 +145,17 @@ const clients = {
     const existing = await this.findByPhone(data.phone_number);
     if (existing) throw new Error(`A client with number ${data.phone_number} already exists.`);
     await db.run(
-      `INSERT INTO clients (phone_number, company_name, owner_phone, booking_url, forward_phone, voice)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO clients (phone_number, company_name, owner_phone, booking_url, forward_phone, voice, address)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [data.phone_number, data.company_name, data.owner_phone || null,
        data.booking_url || null, data.forward_phone || null,
-       data.voice || 'Polly.Joanna-Neural']
+       data.voice || 'Polly.Joanna-Neural', data.address || null]
     );
     return this.findByPhone(data.phone_number);
   },
 
   async update(id, data) {
-    const allowed = ['company_name','owner_phone','booking_url','forward_phone','voice','active'];
+    const allowed = ['company_name','owner_phone','booking_url','forward_phone','voice','address','active'];
     const pairs = Object.entries(data).filter(([k]) => allowed.includes(k));
     if (!pairs.length) return;
     const setClauses = pairs.map(([k]) => `${k} = ?`).join(', ');
@@ -176,6 +176,7 @@ const clients = {
       booking_url:   process.env.BOOKING_URL || '',
       forward_phone: process.env.FORWARD_PHONE || '',
       voice:         process.env.TWILIO_VOICE || 'Polly.Joanna-Neural',
+      address:       process.env.COMPANY_ADDRESS || '',
     };
   }
 };
