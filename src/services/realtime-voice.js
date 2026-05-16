@@ -291,14 +291,15 @@ function createRealtimeBridge(twilioWs) {
               hour: 'numeric', minute: '2-digit', hour12: true,
             });
             const systemPrompt = getVoiceSystemPrompt(revaClient) +
-              `\n\nCURRENT DATE & TIME: ${now} (${tz}).` +
+              `\n\n[INTERNAL CONTEXT — do not read aloud or mention: Today is ${now} (${tz}). Use this only if a customer asks what day/time it is or to confirm appointment days.]` +
               '\n\nOnly use info from this call. Never assume you know the customer\'s name or details.';
             openAiWs.send(JSON.stringify({
               type: 'session.update',
               session: {
-                type:              'realtime',
-                instructions:      systemPrompt,
-                output_modalities: ['audio'],
+                type:                       'realtime',
+                instructions:               systemPrompt,
+                output_modalities:          ['audio'],
+                input_audio_transcription:  { model: 'whisper-1' },
               },
             }));
             break;
@@ -355,8 +356,10 @@ function createRealtimeBridge(twilioWs) {
               const shortGoodbye = ['bye', 'take care'];
               const isGoodbye = clearGoodbye.some(p => tailWords.includes(p)) ||
                                 (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
+              console.log(`[REALTIME] Goodbye check — isGoodbye: ${isGoodbye}, tail: "${tailWords}"`);
               if (isGoodbye && !hangupPending) {
                 hangupPending = true;
+                console.log(`[REALTIME] Goodbye detected — scheduling hangup`);
                 // Wait until OpenAI stops sending audio (1s silence on our end),
                 // then add 5s for Twilio to finish draining its audio buffer.
                 // OpenAI sends deltas faster than real-time so Twilio can have
@@ -482,8 +485,12 @@ function createRealtimeBridge(twilioWs) {
   // ── Hang up ──────────────────────────────────────────────────────────────────
 
   async function hangUp() {
-    if (!callSid || callEnded) return;
+    if (!callSid || callEnded) {
+      console.log(`[REALTIME] hangUp skipped — callSid: ${callSid}, callEnded: ${callEnded}`);
+      return;
+    }
     try {
+      console.log(`[REALTIME] Hanging up call ${callSid}...`);
       const twilio = require('twilio');
       const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
       await client.calls(callSid).update({ status: 'completed' });
@@ -524,9 +531,11 @@ function createRealtimeBridge(twilioWs) {
       const lead = await leadsDb.findByPhone(phone);
       if (!lead) return;
 
-      // Skip everything for very short calls where nothing was captured
+      // Skip very short calls — need at least 2 total turns (AI+user)
       const userMessages = transcript.filter(m => m.role === 'user');
-      if (userMessages.length <= 1) {
+      const aiMessages   = transcript.filter(m => m.role === 'assistant');
+      console.log(`[REALTIME] Transcript: ${aiMessages.length} AI turns, ${userMessages.length} user turns`);
+      if (transcript.length < 2) {
         console.log(`[REALTIME] Very short call from ${phone} — skipping`);
         return;
       }
