@@ -89,6 +89,19 @@ router.delete('/leads/:phone/follow-ups', async (req, res) => {
   res.json({ ok: true });
 });
 
+// DELETE /api/leads/:phone — wipe a lead and all its conversations/follow-ups
+router.delete('/leads/:phone', async (req, res) => {
+  const phone = req.params.phone;
+  try {
+    await followUps.cancelForPhone(phone);
+    await db.run('DELETE FROM conversations WHERE phone = ?', [phone]);
+    await db.run('DELETE FROM leads WHERE phone = ?', [phone]);
+    res.json({ ok: true, deleted: phone });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Clients ────────────────────────────────────────────────────────────────────
 
 // GET /api/clients
