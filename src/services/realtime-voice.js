@@ -291,13 +291,9 @@ function createRealtimeBridge(twilioWs) {
             openAiWs.send(JSON.stringify({
               type: 'session.update',
               session: {
-                type:         'realtime',
-                instructions: systemPrompt,
-                modalities:   ['text', 'audio'],
-                audio: {
-                  input:  { format: 'g711_ulaw' },
-                  output: { format: 'g711_ulaw' },
-                },
+                type:              'realtime',
+                instructions:      systemPrompt,
+                output_modalities: ['audio'],
               },
             }));
             break;
