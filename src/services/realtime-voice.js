@@ -509,7 +509,8 @@ function createRealtimeBridge(twilioWs) {
   }
 
   async function saveCallAndAlert() {
-    if (!transcript.length) return;
+    console.log(`[REALTIME] saveCallAndAlert — transcript: ${transcript.length} items, phone: ${phone}`);
+    if (!transcript.length) { console.log(`[REALTIME] saveCallAndAlert: empty transcript, skipping`); return; }
     try {
       // Skip everything if it was an accidental call
       const accidentalPhrases = [
@@ -528,7 +529,7 @@ function createRealtimeBridge(twilioWs) {
       }
 
       const lead = await leadsDb.findByPhone(phone);
-      if (!lead) return;
+      if (!lead) { console.log(`[REALTIME] saveCallAndAlert: no lead found for ${phone}, skipping`); return; }
 
       // Skip very short calls — need at least 2 total turns (AI+user)
       const userMessages = transcript.filter(m => m.role === 'user');
@@ -582,6 +583,7 @@ function createRealtimeBridge(twilioWs) {
 
       const estimate = getEstimateRange(r.issue_type, r.roof_size, r.notes);
 
+      console.log(`[REALTIME] Sending owner alert to ${revaClient.owner_phone} from ${revaClient.phone_number}`);
       await alertOwner(
         `📞 NEW CALL LEAD — Call them back!\n` +
         `👤 Name: ${r.name || 'Unknown'}\n📞 Phone: ${phone}\n` +
@@ -594,7 +596,7 @@ function createRealtimeBridge(twilioWs) {
         `📅 Appt: ${r.preferred_appointment || 'Not set'}\n` +
         `💬 Source: Phone call`,
         revaClient
-      ).catch(console.error);
+      ).catch(err => console.error(`[REALTIME] alertOwner failed:`, err.message));
 
       // Schedule follow-ups if no appointment was booked
       if (!r.preferred_appointment) {
