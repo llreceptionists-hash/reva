@@ -99,7 +99,7 @@ Return this JSON (use null for anything not mentioned):
   }
 }
 
-const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17';
+const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview';
 
 // ── Audio conversion ─────────────────────────────────────────────────────────
 
