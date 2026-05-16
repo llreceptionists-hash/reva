@@ -215,11 +215,10 @@ function createRealtimeBridge(twilioWs) {
       }
 
       case 'media': {
-        if (openAiReady && openAiWs?.readyState === WebSocket.OPEN) {
+        if (openAiReady && greetingDone && openAiWs?.readyState === WebSocket.OPEN) {
           forwardToOpenAI(msg.media.payload);
-        } else if (!openAiReady) {
-          audioQueue.push(msg.media.payload);
         }
+        // Don't forward mic audio until greeting is done — prevents VAD false-triggers
         break;
       }
 
@@ -300,12 +299,6 @@ function createRealtimeBridge(twilioWs) {
                 type:              'realtime',
                 instructions:      systemPrompt,
                 output_modalities: ['audio'],
-                turn_detection: {
-                  type:                 'server_vad',
-                  threshold:            0.6,
-                  silence_duration_ms:  800,
-                  prefix_padding_ms:    300,
-                },
               },
             }));
             break;
