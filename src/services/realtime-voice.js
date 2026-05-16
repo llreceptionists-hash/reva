@@ -165,18 +165,19 @@ function downsample24to8(buf) {
 // ── Bridge ───────────────────────────────────────────────────────────────────
 
 function createRealtimeBridge(twilioWs) {
-  let streamSid      = null;
-  let callSid        = null;
-  let openAiWs       = null;
-  let callEnded      = false;
-  let openAiReady    = false;
-  let greetingDone   = false; // prevent VAD interrupting the opening greeting
-  let phone          = 'unknown';
-  let revaClient     = null;
-  let lastAudioAt    = 0;    // timestamp of last audio delta — used for hangup timing
-  let hangupPending  = false;
-  const transcript   = [];
-  const audioQueue   = []; // buffer while OpenAI is connecting
+  let streamSid       = null;
+  let callSid         = null;
+  let openAiWs        = null;
+  let callEnded       = false;
+  let openAiReady     = false;
+  let greetingDone    = false; // prevent VAD interrupting the opening greeting
+  let greetingStarted = false; // only fire response.create once
+  let phone           = 'unknown';
+  let revaClient      = null;
+  let lastAudioAt     = 0;    // timestamp of last audio delta — used for hangup timing
+  let hangupPending   = false;
+  const transcript    = [];
+  const audioQueue    = []; // buffer while OpenAI is connecting
 
   // ── Twilio → us ────────────────────────────────────────────────────────────
 
@@ -305,22 +306,25 @@ function createRealtimeBridge(twilioWs) {
           }
 
           case 'session.updated':
-            console.log(`[REALTIME] session.updated — triggering greeting`);
+            console.log(`[REALTIME] session.updated — greetingStarted: ${greetingStarted}`);
             openAiReady = true;
             audioQueue.length = 0;
-            // Try configuring VAD after session is initialized (separate update without type field)
-            openAiWs.send(JSON.stringify({
-              type: 'session.update',
-              session: {
-                turn_detection: {
-                  type:                'server_vad',
-                  threshold:           0.7,
-                  silence_duration_ms: 1200,
-                  prefix_padding_ms:   400,
+            if (!greetingStarted) {
+              greetingStarted = true;
+              // Try configuring VAD in a separate update (without type field)
+              openAiWs.send(JSON.stringify({
+                type: 'session.update',
+                session: {
+                  turn_detection: {
+                    type:                'server_vad',
+                    threshold:           0.7,
+                    silence_duration_ms: 1200,
+                    prefix_padding_ms:   400,
+                  },
                 },
-              },
-            }));
-            openAiWs.send(JSON.stringify({ type: 'response.create' }));
+              }));
+              openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            }
             break;
 
           case 'input_audio_buffer.speech_started':
