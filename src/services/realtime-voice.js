@@ -308,10 +308,7 @@ function createRealtimeBridge(twilioWs) {
             console.log(`[REALTIME] session.updated — triggering greeting`);
             openAiReady = true;
             audioQueue.length = 0;
-            openAiWs.send(JSON.stringify({
-              type: 'response.create',
-              response: { modalities: ['audio', 'text'] },
-            }));
+            openAiWs.send(JSON.stringify({ type: 'response.create' }));
             break;
 
           case 'input_audio_buffer.speech_started':
