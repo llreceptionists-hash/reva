@@ -300,6 +300,12 @@ function createRealtimeBridge(twilioWs) {
                 type:              'realtime',
                 instructions:      systemPrompt,
                 output_modalities: ['audio'],
+                turn_detection: {
+                  type:                 'server_vad',
+                  threshold:            0.6,
+                  silence_duration_ms:  800,
+                  prefix_padding_ms:    300,
+                },
               },
             }));
             break;
