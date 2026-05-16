@@ -531,12 +531,12 @@ function createRealtimeBridge(twilioWs) {
       const lead = await leadsDb.findByPhone(phone);
       if (!lead) { console.log(`[REALTIME] saveCallAndAlert: no lead found for ${phone}, skipping`); return; }
 
-      // Skip very short calls — need at least 2 total turns (AI+user)
+      // Skip very short calls — Reva must have said at least 2 things (greeting + actual conversation)
       const userMessages = transcript.filter(m => m.role === 'user');
       const aiMessages   = transcript.filter(m => m.role === 'assistant');
       console.log(`[REALTIME] Transcript: ${aiMessages.length} AI turns, ${userMessages.length} user turns`);
-      if (transcript.length < 2) {
-        console.log(`[REALTIME] Very short call from ${phone} — skipping`);
+      if (aiMessages.length < 2) {
+        console.log(`[REALTIME] Very short call from ${phone} (${aiMessages.length} AI turns) — skipping`);
         return;
       }
 
