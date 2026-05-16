@@ -235,24 +235,20 @@ function createRealtimeBridge(twilioWs) {
   // ── Audio helpers ───────────────────────────────────────────────────────────
 
   function forwardToOpenAI(base64mulaw) {
-    const ulaw  = Buffer.from(base64mulaw, 'base64');
-    const pcm8  = mulawToPcm16(ulaw);
-    const pcm24 = upsample8to24(pcm8);
+    // GA API accepts audio/pcmu (mulaw) directly — no conversion needed
     openAiWs.send(JSON.stringify({
       type:  'input_audio_buffer.append',
-      audio: pcm24.toString('base64'),
+      audio: base64mulaw,
     }));
   }
 
-  function sendToTwilio(base64pcm24) {
+  function sendToTwilio(base64mulaw) {
+    // GA API outputs audio/pcmu (mulaw) directly — pass straight to Twilio
     if (!streamSid) return;
-    const pcm24 = Buffer.from(base64pcm24, 'base64');
-    const pcm8  = downsample24to8(pcm24);
-    const ulaw  = pcm16ToMulaw(pcm8);
     twilioWs.send(JSON.stringify({
       event: 'media',
       streamSid,
-      media: { payload: ulaw.toString('base64') },
+      media: { payload: base64mulaw },
     }));
   }
 
@@ -287,13 +283,23 @@ function createRealtimeBridge(twilioWs) {
       openAiWs.send(JSON.stringify({
         type: 'session.update',
         session: {
-          type:         'realtime',
-          instructions: systemPrompt,
-          turn_detection: {
-            type:                'server_vad',
-            threshold:           0.95,
-            prefix_padding_ms:   500,
-            silence_duration_ms: 1200,
+          type:             'realtime',
+          instructions:     systemPrompt,
+          output_modalities: ['audio'],
+          audio: {
+            input: {
+              format: { type: 'audio/pcmu' },
+              turn_detection: {
+                type:                'server_vad',
+                threshold:           0.95,
+                prefix_padding_ms:   500,
+                silence_duration_ms: 1200,
+              },
+            },
+            output: {
+              format: { type: 'audio/pcmu' },
+              voice:  'coral',
+            },
           },
           tools: [{
             type:        'function',
@@ -318,6 +324,8 @@ function createRealtimeBridge(twilioWs) {
           tool_choice: 'auto',
         },
       }));
+
+      // With audio/pcmu format, OpenAI accepts mulaw directly — no conversion needed
     });
 
     openAiWs.on('message', async (raw) => {
