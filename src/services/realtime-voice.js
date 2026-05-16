@@ -99,7 +99,7 @@ Return this JSON (use null for anything not mentioned):
   }
 }
 
-const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview';
+const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17';
 
 // ── Audio conversion ─────────────────────────────────────────────────────────
 
@@ -267,8 +267,7 @@ function createRealtimeBridge(twilioWs) {
 
     openAiWs = new WebSocket(REALTIME_URL, {
       headers: {
-        Authorization:  `Bearer ${process.env.OPENAI_API_KEY}`,
-        'OpenAI-Beta':  'realtime=v1',
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
     });
 
