@@ -296,10 +296,9 @@ function createRealtimeBridge(twilioWs) {
             openAiWs.send(JSON.stringify({
               type: 'session.update',
               session: {
-                type:                       'realtime',
-                instructions:               systemPrompt,
-                output_modalities:          ['audio'],
-                input_audio_transcription:  { model: 'whisper-1' },
+                type:              'realtime',
+                instructions:      systemPrompt,
+                output_modalities: ['audio'],
               },
             }));
             break;
