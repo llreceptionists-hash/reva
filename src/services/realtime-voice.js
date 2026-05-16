@@ -319,17 +319,17 @@ function createRealtimeBridge(twilioWs) {
             }
             break;
 
+          // GA API renamed response.done → response.output_item.done
           case 'response.done':
-            // Mark greeting as done after a fixed delay — OpenAI sends all
-            // audio deltas quickly (faster than real-time), so lastAudioAt
-            // goes stale while Twilio is still playing the greeting.
-            // 4s gives enough headroom for any intro length.
+          case 'response.output_item.done':
             if (!greetingDone) {
               setTimeout(() => { greetingDone = true; }, 4000);
             }
             break;
 
+          // GA API renamed response.audio.delta → response.output_audio.delta
           case 'response.audio.delta':
+          case 'response.output_audio.delta':
             if (ev.delta) {
               if (lastAudioAt === 0) console.log(`[REALTIME] First audio delta received — sending to Twilio`);
               sendToTwilio(ev.delta);
@@ -337,7 +337,9 @@ function createRealtimeBridge(twilioWs) {
             }
             break;
 
+          // GA API renamed response.audio_transcript.done → response.output_audio_transcript.done
           case 'response.audio_transcript.done':
+          case 'response.output_audio_transcript.done':
             if (ev.transcript) {
               transcript.push({ role: 'assistant', text: ev.transcript });
               console.log(`[REALTIME] AI: ${ev.transcript.slice(0, 80)}`);
