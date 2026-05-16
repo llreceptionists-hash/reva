@@ -331,6 +331,7 @@ function createRealtimeBridge(twilioWs) {
 
           case 'response.audio.delta':
             if (ev.delta) {
+              if (lastAudioAt === 0) console.log(`[REALTIME] First audio delta received — sending to Twilio`);
               sendToTwilio(ev.delta);
               lastAudioAt = Date.now();
             }
