@@ -308,6 +308,18 @@ function createRealtimeBridge(twilioWs) {
             console.log(`[REALTIME] session.updated — triggering greeting`);
             openAiReady = true;
             audioQueue.length = 0;
+            // Try configuring VAD after session is initialized (separate update without type field)
+            openAiWs.send(JSON.stringify({
+              type: 'session.update',
+              session: {
+                turn_detection: {
+                  type:                'server_vad',
+                  threshold:           0.7,
+                  silence_duration_ms: 1200,
+                  prefix_padding_ms:   400,
+                },
+              },
+            }));
             openAiWs.send(JSON.stringify({ type: 'response.create' }));
             break;
 
