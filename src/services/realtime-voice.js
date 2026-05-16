@@ -99,7 +99,7 @@ Return this JSON (use null for anything not mentioned):
   }
 }
 
-const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-mini-realtime-preview-2024-12-17';
+const REALTIME_URL = 'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17';
 
 // ── Audio conversion ─────────────────────────────────────────────────────────
 
@@ -416,7 +416,7 @@ function createRealtimeBridge(twilioWs) {
     });
 
     openAiWs.on('error', (err) => console.error('[REALTIME] OpenAI WS error:', err.message));
-    openAiWs.on('close', ()  => console.log('[REALTIME] OpenAI WS closed'));
+    openAiWs.on('close', (code, reason) => console.log(`[REALTIME] OpenAI WS closed — code: ${code}, reason: ${reason?.toString() || 'none'}`));
   }
 
   // ── Lead update tool call ───────────────────────────────────────────────────
