@@ -385,6 +385,10 @@ function createRealtimeBridge(twilioWs) {
           case 'error':
             console.error('[REALTIME] OpenAI error:', JSON.stringify(ev.error));
             break;
+
+          default:
+            console.log(`[REALTIME] OpenAI event: ${ev.type}`);
+            break;
         }
       } catch (err) {
         console.error('[REALTIME] message handler error:', err);
