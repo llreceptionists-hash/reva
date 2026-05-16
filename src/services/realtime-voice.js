@@ -277,7 +277,7 @@ function createRealtimeBridge(twilioWs) {
       openAiWs.send(JSON.stringify({
         type: 'session.update',
         session: {
-          type:         'session',
+          type:         'realtime',
           modalities:   ['text', 'audio'],
           instructions: getVoiceSystemPrompt(revaClient) +
             (() => {
