@@ -269,9 +269,7 @@ function createRealtimeBridge(twilioWs) {
 
     openAiWs.on('open', () => {
       console.log(`[REALTIME] OpenAI connected for ${phone}`);
-      // Skip session.update for now — test if bare connection stays alive
-      // and trigger a greeting to see if audio works with defaults
-      openAiWs.send(JSON.stringify({ type: 'response.create' }));
+      // Wait for session.created before doing anything
     });
 
     openAiWs.on('message', async (raw) => {
@@ -279,11 +277,18 @@ function createRealtimeBridge(twilioWs) {
         const ev = JSON.parse(raw);
         switch (ev.type) {
 
-          case 'session.updated':
           case 'session.created':
+            console.log(`[REALTIME] session.created:`, JSON.stringify(ev.session).slice(0, 300));
+            // Now configure the session and trigger greeting
             openAiReady = true;
             audioQueue.length = 0;
-            console.log(`[REALTIME] Session ready`);
+            openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            break;
+
+          case 'session.updated':
+            console.log(`[REALTIME] session.updated OK`);
+            openAiReady = true;
+            audioQueue.length = 0;
             break;
 
           case 'input_audio_buffer.speech_started':
