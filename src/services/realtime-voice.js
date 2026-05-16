@@ -289,7 +289,6 @@ function createRealtimeBridge(twilioWs) {
         session: {
           type:         'realtime',
           instructions: systemPrompt,
-          voice:        'coral',
           turn_detection: {
             type:                'server_vad',
             threshold:           0.95,
