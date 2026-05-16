@@ -269,24 +269,9 @@ function createRealtimeBridge(twilioWs) {
 
     openAiWs.on('open', () => {
       console.log(`[REALTIME] OpenAI connected for ${phone}`);
-
-      const tz  = process.env.TIMEZONE || 'America/Vancouver';
-      const now = new Date().toLocaleString('en-US', {
-        timeZone: tz, weekday: 'long', year: 'numeric',
-        month: 'long', day: 'numeric',
-        hour: 'numeric', minute: '2-digit', hour12: true,
-      });
-      const systemPrompt = getVoiceSystemPrompt(revaClient) +
-        `\n\nCURRENT DATE & TIME: ${now} (${tz}). Use this when discussing availability or appointment times. Never suggest a time that has already passed today.` +
-        '\n\nCRITICAL — ONLY use information from THIS call:\n- Never assume you already know the customer\'s name, address, or any details\n- If you have not been told something, you do not know it — ask for it naturally\n- Do not book or confirm an appointment unless the customer has explicitly agreed to a specific time on this call\n- If you hear silence or cannot understand what was said, just say "hey sorry, didn\'t quite catch that — what\'s going on with the roof?"\n\nNever mention you are using any tools.';
-
-      openAiWs.send(JSON.stringify({
-        type: 'session.update',
-        session: {
-          type:         'realtime',
-          instructions: systemPrompt,
-        },
-      }));
+      // Skip session.update for now — test if bare connection stays alive
+      // and trigger a greeting to see if audio works with defaults
+      openAiWs.send(JSON.stringify({ type: 'response.create' }));
     });
 
     openAiWs.on('message', async (raw) => {
@@ -295,11 +280,10 @@ function createRealtimeBridge(twilioWs) {
         switch (ev.type) {
 
           case 'session.updated':
-            // Session ready — discard buffered audio (it's just connection noise)
-            // then trigger the greeting
+          case 'session.created':
             openAiReady = true;
             audioQueue.length = 0;
-            openAiWs.send(JSON.stringify({ type: 'response.create' }));
+            console.log(`[REALTIME] Session ready`);
             break;
 
           case 'input_audio_buffer.speech_started':
