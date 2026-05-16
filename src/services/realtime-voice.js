@@ -235,20 +235,26 @@ function createRealtimeBridge(twilioWs) {
   // ── Audio helpers ───────────────────────────────────────────────────────────
 
   function forwardToOpenAI(base64mulaw) {
-    // Session configured with g711_ulaw — pass mulaw straight through
+    // Twilio sends mulaw 8kHz — convert to PCM16 24kHz for OpenAI
+    const ulaw  = Buffer.from(base64mulaw, 'base64');
+    const pcm8  = mulawToPcm16(ulaw);
+    const pcm24 = upsample8to24(pcm8);
     openAiWs.send(JSON.stringify({
       type:  'input_audio_buffer.append',
-      audio: base64mulaw,
+      audio: pcm24.toString('base64'),
     }));
   }
 
-  function sendToTwilio(base64ulaw) {
-    // Session configured with g711_ulaw output — pass straight to Twilio
+  function sendToTwilio(base64pcm24) {
+    // OpenAI sends PCM16 24kHz — convert to mulaw 8kHz for Twilio
     if (!streamSid) return;
+    const pcm24 = Buffer.from(base64pcm24, 'base64');
+    const pcm8  = downsample24to8(pcm24);
+    const ulaw  = pcm16ToMulaw(pcm8);
     twilioWs.send(JSON.stringify({
       event: 'media',
       streamSid,
-      media: { payload: base64ulaw },
+      media: { payload: ulaw.toString('base64') },
     }));
   }
 
