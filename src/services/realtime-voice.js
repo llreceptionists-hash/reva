@@ -283,49 +283,10 @@ function createRealtimeBridge(twilioWs) {
       openAiWs.send(JSON.stringify({
         type: 'session.update',
         session: {
-          type:             'realtime',
-          instructions:     systemPrompt,
-          output_modalities: ['audio'],
-          audio: {
-            input: {
-              format: { type: 'audio/pcmu' },
-              turn_detection: {
-                type:                'server_vad',
-                threshold:           0.95,
-                prefix_padding_ms:   500,
-                silence_duration_ms: 1200,
-              },
-            },
-            output: {
-              format: { type: 'audio/pcmu' },
-              voice:  'coral',
-            },
-          },
-          tools: [{
-            type:        'function',
-            name:        'update_lead',
-            description: 'Save customer info gathered on the call.',
-            parameters: {
-              type: 'object',
-              properties: {
-                name:                  { type: 'string' },
-                address:               { type: 'string' },
-                city:                  { type: 'string' },
-                issue_type:            { type: 'string' },
-                urgency:               { type: 'string', enum: ['emergency','urgent','normal','low'] },
-                property_type:         { type: 'string', enum: ['residential','commercial'] },
-                preferred_appointment: { type: 'string' },
-                stage:                 { type: 'string', enum: ['new','contacted','qualified','appointment_set'] },
-                priority:              { type: 'string', enum: ['high','normal','low'] },
-                notes:                 { type: 'string' },
-              },
-            },
-          }],
-          tool_choice: 'auto',
+          type:         'realtime',
+          instructions: systemPrompt,
         },
       }));
-
-      // With audio/pcmu format, OpenAI accepts mulaw directly — no conversion needed
     });
 
     openAiWs.on('message', async (raw) => {
