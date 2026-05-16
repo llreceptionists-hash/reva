@@ -312,17 +312,22 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'input_audio_buffer.speech_started':
-            // Only allow interruptions after the greeting is fully done
-            if (greetingDone && streamSid) {
-              twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
-            }
+            // Without configurable VAD we can't reliably distinguish real speech
+            // from echo/noise — skip the clear to avoid cutting Reva off falsely
             break;
 
           // GA API renamed response.done → response.output_item.done
           case 'response.done':
           case 'response.output_item.done':
             if (!greetingDone) {
-              setTimeout(() => { greetingDone = true; }, 4000);
+              // Wait until Reva's audio actually stops arriving at Twilio,
+              // then add 3s for Twilio's buffer to drain before opening the mic
+              const waitAudioEnd = setInterval(() => {
+                if (lastAudioAt > 0 && Date.now() - lastAudioAt > 500) {
+                  clearInterval(waitAudioEnd);
+                  setTimeout(() => { greetingDone = true; console.log('[REALTIME] greetingDone — mic now open'); }, 3000);
+                }
+              }, 100);
             }
             break;
 
@@ -338,41 +343,41 @@ function createRealtimeBridge(twilioWs) {
 
           // GA API renamed response.audio_transcript.done → response.output_audio_transcript.done
           case 'response.audio_transcript.done':
-          case 'response.output_audio_transcript.done':
-            if (ev.transcript) {
-              transcript.push({ role: 'assistant', text: ev.transcript });
-              console.log(`[REALTIME] AI: ${ev.transcript.slice(0, 80)}`);
-              // Hang up after a clear goodbye — only if it's a short closing message
-              // to avoid triggering mid-conversation on phrases like "take care of your roof"
-              const text  = ev.transcript.toLowerCase().trim();
+          case 'response.output_audio_transcript.done': {
+            const tx = ev.transcript ?? ev.audio_transcript ?? ev.text ?? null;
+            if (tx) {
+              transcript.push({ role: 'assistant', text: tx });
+              console.log(`[REALTIME] AI: ${tx.slice(0, 120)}`);
+              const text  = tx.toLowerCase().trim();
               const words = text.split(/\s+/);
-              const isShortMessage = words.length < 25;
-              // Only check the tail of the message — prevents mid-convo confirmation
-              // phrases like "have a good one" from triggering early hangup
-              const lastWords  = words.slice(-6).join(' ');
-              const tailWords  = words.slice(-15).join(' ');
-              const clearGoodbye = ['have a great day', 'have a good day', 'have a good one', 'talk soon', 'goodbye', 'take care now'];
-              const shortGoodbye = ['bye', 'take care'];
-              const isGoodbye = clearGoodbye.some(p => tailWords.includes(p)) ||
-                                (isShortMessage && shortGoodbye.some(p => lastWords.includes(p)));
+              const isShortMessage = words.length < 30;
+              const lastWords = words.slice(-6).join(' ');
+              const tailWords = words.slice(-15).join(' ');
+              const goodbyePhrases = [
+                'have a great day', 'have a good day', 'have a good one',
+                'talk soon', 'goodbye', 'take care now', 'take care',
+                'see you soon', 'thanks for calling', 'bye bye',
+                'have a good rest', 'all the best', 'good luck',
+              ];
+              const shortBye = ['bye'];
+              const isGoodbye = goodbyePhrases.some(p => tailWords.includes(p)) ||
+                                (isShortMessage && shortBye.some(p => lastWords.includes(p)));
               console.log(`[REALTIME] Goodbye check — isGoodbye: ${isGoodbye}, tail: "${tailWords}"`);
               if (isGoodbye && !hangupPending) {
                 hangupPending = true;
                 console.log(`[REALTIME] Goodbye detected — scheduling hangup`);
-                // Wait until OpenAI stops sending audio (1s silence on our end),
-                // then add 5s for Twilio to finish draining its audio buffer.
-                // OpenAI sends deltas faster than real-time so Twilio can have
-                // several seconds of audio queued up after we stop receiving deltas.
                 const pollInterval = setInterval(() => {
-                  const silentMs = Date.now() - lastAudioAt;
-                  if (silentMs >= 1000) {
+                  if (Date.now() - lastAudioAt >= 1000) {
                     clearInterval(pollInterval);
                     setTimeout(() => hangUp(), 5000);
                   }
                 }, 200);
               }
+            } else {
+              console.log(`[REALTIME] transcript.done event — no transcript field found. Keys: ${Object.keys(ev).join(', ')}`);
             }
             break;
+          }
 
           case 'conversation.item.input_audio_transcription.completed':
             if (ev.transcript) {
