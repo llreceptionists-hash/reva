@@ -328,8 +328,10 @@ function createRealtimeBridge(twilioWs) {
             break;
 
           case 'input_audio_buffer.speech_started':
-            // Without configurable VAD we can't reliably distinguish real speech
-            // from echo/noise — skip the clear to avoid cutting Reva off falsely
+            // Barge-in: stop Reva talking so the user can speak
+            if (greetingDone && streamSid) {
+              twilioWs.send(JSON.stringify({ event: 'clear', streamSid }));
+            }
             break;
 
           // GA API renamed response.done → response.output_item.done
